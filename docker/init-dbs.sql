@@ -1,0 +1,5 @@
+CREATE DATABASE auth_db;
+CREATE DATABASE game_db;
+CREATE DATABASE word_db;
+CREATE DATABASE voting_db;
+CREATE DATABASE player_db;
