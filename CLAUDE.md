@@ -238,7 +238,7 @@ public void transition(Room room, GameEvent event) {
 |------------------|------------------|------------------------------------|-----------------------------------------------------|
 | `game.events`    | game-service     | notification-service, player-service | `GAME_STARTED`, `PHASE_CHANGED`, `GAME_ENDED`     |
 | `voting.results` | voting-service   | game-service, notification-service | `VOTE_CAST`, `VOTING_COMPLETE`, `PLAYER_ELIMINATED` |
-| `player.actions` | notification-service | game-service                   | `PLAYER_JOINED`, `PLAYER_LEFT`                      |
+| `player.actions` | game-service         | notification-service           | `PLAYER_JOINED`, `PLAYER_LEFT`                      |
 
 All events share this envelope:
 
