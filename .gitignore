@@ -40,3 +40,6 @@ application-local.properties
 
 # Testcontainers
 .testcontainers.properties
+
+# Local docs (plans, specs — not for version control)
+/docs
