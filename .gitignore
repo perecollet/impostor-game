@@ -41,5 +41,5 @@ application-local.properties
 # Testcontainers
 .testcontainers.properties
 
-# Local docs (plans, specs — not for version control)
-/docs
+# Superpowers planning artifacts — not for version control
+/docs/superpowers
