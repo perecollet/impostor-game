@@ -38,6 +38,7 @@ class GuestServiceTest {
         assertThat(response.displayName()).isEqualTo("SpecificName");
         assertThat(response.refreshToken()).isNull();
         assertThat(response.role()).isEqualTo("GUEST");
+        assertThat(response.expiresIn()).isEqualTo(14400000L);
         verify(guestNamePort, never()).generate();
     }
 

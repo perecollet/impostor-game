@@ -50,11 +50,12 @@ public class RegisterService implements RegisterUseCase {
     }
 
     private String saveRefreshToken(UUID userId) {
+        Instant now = Instant.now();
         RefreshToken token = RefreshToken.builder()
                 .userId(userId)
                 .token(UUID.randomUUID().toString())
-                .expiresAt(Instant.now().plusSeconds(2592000))
-                .createdAt(Instant.now())
+                .expiresAt(now.plusSeconds(2592000))
+                .createdAt(now)
                 .build();
         return refreshTokenRepository.save(token).getToken();
     }
