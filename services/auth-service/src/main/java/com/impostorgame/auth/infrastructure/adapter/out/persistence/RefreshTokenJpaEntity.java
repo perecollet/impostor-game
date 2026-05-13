@@ -1,7 +1,8 @@
-package com.impostorgame.auth.domain;
+package com.impostorgame.auth.infrastructure.adapter.out.persistence;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.Instant;
 import java.util.UUID;
 
@@ -9,10 +10,10 @@ import java.util.UUID;
 @Table(name = "refresh_tokens")
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class RefreshToken {
+public class RefreshTokenJpaEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -20,7 +21,7 @@ public class RefreshToken {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private UserJpaEntity user;
 
     @Column(nullable = false, unique = true)
     private String token;
@@ -33,10 +34,6 @@ public class RefreshToken {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = Instant.now();
-    }
-
-    public boolean isExpired() {
-        return Instant.now().isAfter(expiresAt);
+        if (createdAt == null) createdAt = Instant.now();
     }
 }

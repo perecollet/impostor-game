@@ -1,4 +1,4 @@
-package com.impostorgame.auth.config;
+package com.impostorgame.auth.infrastructure.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

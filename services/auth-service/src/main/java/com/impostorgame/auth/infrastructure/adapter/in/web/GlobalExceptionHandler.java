@@ -1,5 +1,8 @@
-package com.impostorgame.auth.exception;
+package com.impostorgame.auth.infrastructure.adapter.in.web;
 
+import com.impostorgame.auth.domain.exception.InvalidCredentialsException;
+import com.impostorgame.auth.domain.exception.InvalidTokenException;
+import com.impostorgame.auth.domain.exception.UserAlreadyExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.validation.FieldError;
@@ -33,8 +36,6 @@ public class GlobalExceptionHandler {
                 .map(FieldError::getDefaultMessage)
                 .findFirst()
                 .orElse(DEFAULT_VALIDATION_MESSAGE);
-
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message);
     }
-
 }

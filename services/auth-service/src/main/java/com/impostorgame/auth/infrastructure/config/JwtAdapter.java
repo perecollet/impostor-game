@@ -1,24 +1,24 @@
-package com.impostorgame.auth.service;
+package com.impostorgame.auth.infrastructure.config;
 
-import com.impostorgame.auth.config.JwtProperties;
-import com.impostorgame.auth.domain.Role;
-import io.jsonwebtoken.Claims;
+import com.impostorgame.auth.domain.model.Role;
+import com.impostorgame.auth.domain.port.out.JwtPort;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.UUID;
 
-@Service
+@Component
 @RequiredArgsConstructor
-public class JwtService {
+public class JwtAdapter implements JwtPort {
 
     private final JwtProperties jwtProperties;
 
+    @Override
     public String generateToken(UUID userId, String displayName, Role role) {
         long expiration = role == Role.GUEST
                 ? jwtProperties.guestExpiration()
@@ -33,25 +33,10 @@ public class JwtService {
                 .compact();
     }
 
-    public Claims validateAndExtract(String token) {
-        return Jwts.parser()
-                .verifyWith(getSecretKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-    }
-
-    public String extractUserId(String token) {
-        return validateAndExtract(token).getSubject();
-    }
-
-    public String extractRole(String token) {
-        return validateAndExtract(token).get("role", String.class);
-    }
-
+    @Override
     public boolean isValid(String token) {
         try {
-            validateAndExtract(token);
+            Jwts.parser().verifyWith(getSecretKey()).build().parseSignedClaims(token).getPayload();
             return true;
         } catch (Exception e) {
             return false;
@@ -59,8 +44,6 @@ public class JwtService {
     }
 
     private SecretKey getSecretKey() {
-        return Keys.hmacShaKeyFor(
-                jwtProperties.secret().getBytes(StandardCharsets.UTF_8)
-        );
+        return Keys.hmacShaKeyFor(jwtProperties.secret().getBytes(StandardCharsets.UTF_8));
     }
 }

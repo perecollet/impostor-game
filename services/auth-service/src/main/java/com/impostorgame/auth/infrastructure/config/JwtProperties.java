@@ -1,4 +1,4 @@
-package com.impostorgame.auth.config;
+package com.impostorgame.auth.infrastructure.config;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
@@ -7,7 +7,7 @@ import org.springframework.validation.annotation.Validated;
 
 @Validated
 @ConfigurationProperties(prefix = "jwt")
-public record JwtProperties (
+public record JwtProperties(
         @NotBlank
         String secret,
 
@@ -16,4 +16,4 @@ public record JwtProperties (
 
         @Positive
         long guestExpiration
-){}
+) {}

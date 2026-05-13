@@ -1,5 +1,6 @@
-package com.impostorgame.auth.domain;
+package com.impostorgame.auth.infrastructure.adapter.out.persistence;
 
+import com.impostorgame.auth.domain.model.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -10,12 +11,12 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "users")
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
 @Builder
-public class User {
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserJpaEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -40,6 +41,6 @@ public class User {
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = Instant.now();
+        if (createdAt == null) createdAt = Instant.now();
     }
 }
