@@ -18,7 +18,7 @@ release.properties
 *.iws
 *.iml
 *.ipr
-out/
+/out/
 
 # Spring Boot
 *.log
