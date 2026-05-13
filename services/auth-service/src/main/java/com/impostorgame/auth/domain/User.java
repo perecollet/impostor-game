@@ -2,6 +2,8 @@ package com.impostorgame.auth.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -28,8 +30,9 @@ public class User {
     @Column(name = "display_name", nullable = false)
     private String displayName;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     private Role role;
 
     @Column(name = "created_at", nullable = false, updatable = false)
