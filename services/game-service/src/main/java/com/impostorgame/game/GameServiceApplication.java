@@ -1,4 +1,4 @@
-package com.impostorgame.game_service;
+package com.impostorgame.game;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
