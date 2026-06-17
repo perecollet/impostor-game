@@ -42,4 +42,6 @@ application-local.properties
 .testcontainers.properties
 
 # Superpowers planning artifacts — not for version control
-/docs/superpowersestructura.txt
+/docs/superpowers
+
+estructura.txt
