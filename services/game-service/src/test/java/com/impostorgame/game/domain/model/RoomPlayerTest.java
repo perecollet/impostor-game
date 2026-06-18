@@ -1,7 +1,5 @@
-package com.impostorgame.game.unit;
+package com.impostorgame.game.domain.model;
 
-import com.impostorgame.game.domain.model.PlayerId;
-import com.impostorgame.game.domain.model.RoomPlayer;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
