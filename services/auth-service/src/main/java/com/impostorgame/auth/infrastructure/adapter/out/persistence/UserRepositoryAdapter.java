@@ -3,12 +3,12 @@ package com.impostorgame.auth.infrastructure.adapter.out.persistence;
 import com.impostorgame.auth.domain.model.User;
 import com.impostorgame.auth.domain.port.out.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 import java.util.UUID;
 
-@Component
+@Repository
 @RequiredArgsConstructor
 public class UserRepositoryAdapter implements UserRepository {
 
