@@ -3,6 +3,8 @@ package com.impostorgame.game.domain.model;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.util.Set;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -83,5 +85,46 @@ class RoomTest {
         room.leave(bob.id());
 
         assertThat(room.players()).doesNotContain(bob);
+    }
+
+    @Test
+    void restore_rebuildsRoomWithGivenPhaseAndPlayers() {
+        RoomCode code = RoomCode.generate();
+        Set<RoomPlayer> players = Set.of(
+                RoomPlayer.of(PlayerId.of("host-1"), "Alice", true, false),
+                RoomPlayer.of(PlayerId.of("p2"), "Bob", false, false)
+        );
+
+        Room room = Room.restore(code, GamePhase.DISCUSSION, players);
+
+        assertThat(room.code()).isEqualTo(code);
+        assertThat(room.phase()).isEqualTo(GamePhase.DISCUSSION);
+        assertThat(room.players()).hasSize(2);
+    }
+
+    @Test
+    void restore_rejectsNullCode() {
+        Set<RoomPlayer> players = Set.of(RoomPlayer.of(PlayerId.of("host-1"), "Alice", true, false));
+        assertThatThrownBy(() -> Room.restore(null, GamePhase.LOBBY, players))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void restore_rejectsNullPhase() {
+        Set<RoomPlayer> players = Set.of(RoomPlayer.of(PlayerId.of("host-1"), "Alice", true, false));
+        assertThatThrownBy(() -> Room.restore(RoomCode.generate(), null, players))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void restore_rejectsEmptyPlayers() {
+        assertThatThrownBy(() -> Room.restore(RoomCode.generate(), GamePhase.LOBBY, Set.of()))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void restore_rejectsNullPlayers() {
+        assertThatThrownBy(() -> Room.restore(RoomCode.generate(), GamePhase.LOBBY, null))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }
