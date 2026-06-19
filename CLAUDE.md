@@ -14,7 +14,7 @@ Players do not need to register — guests and registered users both play.
 
 ## Tech stack
 
-- **Language:** Java 21 — **Framework:** Spring Boot 3.5.x
+- **Language:** Java 25 — **Framework:** Spring Boot 4.0.x
 - **Build:** Maven monorepo with parent pom
 - **Discovery:** Eureka — **Config:** Spring Cloud Config (Slice 5)
 - **Sync:** REST via OpenFeign — **Async:** Apache Kafka
@@ -47,9 +47,9 @@ Every service follows this structure:
         ├── adapter/
         │   ├── in/web/            ← REST controllers
         │   └── out/
-        │       ├── persistence/   ← JPA entities + repositories implementing port/out
+        │       ├── persistence/   ← primary store: JPA (Postgres) or Redis when Redis is the source of truth
         │       ├── messaging/     ← Kafka producers + consumers
-        │       └── cache/         ← Redis
+        │       └── cache/         ← Redis used only as a derived cache (data whose truth lives elsewhere)
         └── config/                ← Spring beans
 ```
 
