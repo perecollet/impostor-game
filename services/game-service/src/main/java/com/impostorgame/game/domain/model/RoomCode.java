@@ -32,4 +32,8 @@ public record RoomCode(String value) {
         return new RoomCode(code.toString());
     }
 
+    public static RoomCode of(String value){
+        return new RoomCode(value);
+    }
+
 }
