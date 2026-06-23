@@ -1,0 +1,2 @@
+jwt:
+  private-key-location: file:keys/private.pem

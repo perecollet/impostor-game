@@ -5,5 +5,4 @@ import java.util.UUID;
 
 public interface JwtPort {
     String generateToken(UUID userId, String displayName, Role role);
-    boolean isValid(String token);
 }
