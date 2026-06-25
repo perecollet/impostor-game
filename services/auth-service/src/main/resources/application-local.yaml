@@ -1,2 +1,3 @@
 jwt:
   private-key-location: file:keys/private.pem
+  public-key-location: file:keys/public.pem

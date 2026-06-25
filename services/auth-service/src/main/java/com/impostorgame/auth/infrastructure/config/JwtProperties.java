@@ -13,6 +13,8 @@ public record JwtProperties(
 
         Resource privateKeyLocation,
 
+        Resource publicKeyLocation,
+
         @NotBlank
         String kid,
 
