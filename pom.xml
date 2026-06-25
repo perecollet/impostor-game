@@ -23,6 +23,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring-boot.version>4.0.7</spring-boot.version>
         <spring-cloud.version>2025.1.2</spring-cloud.version>
+        <nimbus.version>10.9.1</nimbus.version>
     </properties>
 
     <dependencyManagement>
@@ -40,6 +41,11 @@
                 <version>${spring-cloud.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.nimbusds</groupId>
+                <artifactId>nimbus-jose-jwt</artifactId>
+                <version>${nimbus.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
