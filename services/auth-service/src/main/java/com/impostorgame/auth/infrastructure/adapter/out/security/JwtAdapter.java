@@ -1,7 +1,8 @@
-package com.impostorgame.auth.infrastructure.config;
+package com.impostorgame.auth.infrastructure.adapter.out.security;
 
 import com.impostorgame.auth.domain.model.Role;
 import com.impostorgame.auth.domain.port.out.JwtPort;
+import com.impostorgame.auth.infrastructure.config.JwtProperties;
 import io.jsonwebtoken.Jwts;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,7 @@ public class JwtAdapter implements JwtPort {
                 ? jwtProperties.guestExpiration()
                 : jwtProperties.expiration();
         return Jwts.builder()
+                .header().add("kid", jwtProperties.kid()).and()
                 .subject(userId.toString())
                 .claim("role", role.name())
                 .claim("displayName", displayName)

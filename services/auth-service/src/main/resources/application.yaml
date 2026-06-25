@@ -25,5 +25,6 @@ eureka:
     prefer-ip-address: true
 
 jwt:
+  kid: 'auth-key-1'
   expiration: 86400000       # 24h in milliseconds
   guest-expiration: 14400000 # 4h in milliseconds
