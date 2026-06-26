@@ -3,6 +3,11 @@ server:
 spring:
   application:
     name: game-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://${auth-service.host}/.well-known/jwks.json
   autoconfigure:
     exclude:
       - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
