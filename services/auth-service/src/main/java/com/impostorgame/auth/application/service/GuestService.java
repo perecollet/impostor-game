@@ -6,17 +6,20 @@ import com.impostorgame.auth.domain.model.Role;
 import com.impostorgame.auth.domain.port.in.GuestUseCase;
 import com.impostorgame.auth.domain.port.out.GuestNamePort;
 import com.impostorgame.auth.domain.port.out.JwtPort;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class GuestService implements GuestUseCase {
 
     private final JwtPort jwtPort;
     private final GuestNamePort guestNamePort;
+
+    public GuestService(JwtPort jwtPort, GuestNamePort guestNamePort) {
+        this.jwtPort = jwtPort;
+        this.guestNamePort = guestNamePort;
+    }
 
     @Override
     public AuthResponse guest(GuestRequest request) {

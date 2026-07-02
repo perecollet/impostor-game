@@ -10,7 +10,6 @@ import com.impostorgame.auth.domain.port.in.RefreshTokenUseCase;
 import com.impostorgame.auth.domain.port.out.JwtPort;
 import com.impostorgame.auth.domain.port.out.RefreshTokenRepository;
 import com.impostorgame.auth.domain.port.out.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,12 +17,17 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class RefreshTokenService implements RefreshTokenUseCase {
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
     private final JwtPort jwtPort;
+
+    public RefreshTokenService(RefreshTokenRepository refreshTokenRepository, JwtPort jwtPort, UserRepository userRepository) {
+        this.refreshTokenRepository = refreshTokenRepository;
+        this.jwtPort = jwtPort;
+        this.userRepository = userRepository;
+    }
 
     @Override
     @Transactional

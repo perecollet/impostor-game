@@ -10,7 +10,6 @@ import com.impostorgame.auth.domain.port.in.LoginUseCase;
 import com.impostorgame.auth.domain.port.in.RefreshTokenUseCase;
 import com.impostorgame.auth.domain.port.in.RegisterUseCase;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,13 +19,20 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
     private final RegisterUseCase registerUseCase;
     private final LoginUseCase loginUseCase;
     private final GuestUseCase guestUseCase;
     private final RefreshTokenUseCase refreshTokenUseCase;
+
+    public AuthController(RegisterUseCase registerUseCase, LoginUseCase loginUseCase, GuestUseCase guestUseCase
+            , RefreshTokenUseCase refreshTokenUseCase) {
+        this.registerUseCase = registerUseCase;
+        this.loginUseCase = loginUseCase;
+        this.guestUseCase = guestUseCase;
+        this.refreshTokenUseCase = refreshTokenUseCase;
+    }
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {

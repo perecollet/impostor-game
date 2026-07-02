@@ -185,6 +185,7 @@ Run in Docker: `SPRING_PROFILES_ACTIVE=docker`
 
 ## Hard rules — never violate these
 
+
 - No service imports or queries another service's database
 - No shared business logic in the monorepo — versions only in root pom
 - `domain/` layer has zero Spring/JPA/Kafka imports
@@ -194,3 +195,12 @@ Run in Docker: `SPRING_PROFILES_ACTIVE=docker`
 - State machine only called from within `game-service` — never from outside
 - Guests never persisted in any database
 - Kafka consumers must be idempotent — same event delivered twice must be safe
+
+### Injection convention
+
+- Inyectable classes (application services, adapters, controllers):
+  explicit constructor, `private final` fields, no `@RequiredArgsConstructor`.
+  Single constructor → Spring injects without `@Autowired`.
+- Lombok allowed only for `@Getter`/`@Builder` on DTOs and Redis entities.
+- domain/ stays Lombok-free: constructors/factories are hand-written
+  because they validate invariants.

@@ -10,7 +10,6 @@ import com.impostorgame.auth.domain.port.in.RegisterUseCase;
 import com.impostorgame.auth.domain.port.out.JwtPort;
 import com.impostorgame.auth.domain.port.out.RefreshTokenRepository;
 import com.impostorgame.auth.domain.port.out.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,13 +18,20 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class RegisterService implements RegisterUseCase {
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtPort jwtPort;
     private final PasswordEncoder passwordEncoder;
+
+    public RegisterService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository,
+                           JwtPort jwtPort, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.refreshTokenRepository = refreshTokenRepository;
+        this.jwtPort = jwtPort;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Override
     @Transactional

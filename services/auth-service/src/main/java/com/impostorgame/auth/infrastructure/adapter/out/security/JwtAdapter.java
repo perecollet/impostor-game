@@ -5,7 +5,6 @@ import com.impostorgame.auth.domain.port.out.JwtPort;
 import com.impostorgame.auth.infrastructure.config.JwtProperties;
 import io.jsonwebtoken.Jwts;
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -17,11 +16,14 @@ import java.util.Date;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
 public class JwtAdapter implements JwtPort {
 
     private final JwtProperties jwtProperties;
     private PrivateKey privateKey;
+
+    public JwtAdapter(JwtProperties jwtProperties) {
+        this.jwtProperties = jwtProperties;
+    }
 
     @PostConstruct
     private void loadPrivateKey() {

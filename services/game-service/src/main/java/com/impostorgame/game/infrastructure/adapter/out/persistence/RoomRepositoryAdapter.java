@@ -6,7 +6,6 @@ import com.impostorgame.game.domain.model.Room;
 import com.impostorgame.game.domain.model.RoomCode;
 import com.impostorgame.game.domain.model.RoomPlayer;
 import com.impostorgame.game.domain.port.out.RoomRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -14,10 +13,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Repository
-@RequiredArgsConstructor
 public class RoomRepositoryAdapter implements RoomRepository {
 
     private final RoomRedisRepository redisRepository;
+
+    public RoomRepositoryAdapter(RoomRedisRepository redisRepository) {
+        this.redisRepository = redisRepository;
+    }
 
     @Override
     public Room save(Room room) {
