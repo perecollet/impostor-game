@@ -26,9 +26,9 @@ public class GuestService implements GuestUseCase {
 
     @Override
     public AuthResponse guest(GuestRequest request) {
-        String displayName = request.displayName() != null
-                ? request.displayName()
-                : guestNamePort.generate();
+        String displayName = request.displayName() == null || request.displayName().isBlank()
+                ? guestNamePort.generate()
+                : request.displayName();
 
         UUID guestId = UUID.randomUUID();
         String jwt = jwtPort.generateToken(guestId, displayName, Role.GUEST);

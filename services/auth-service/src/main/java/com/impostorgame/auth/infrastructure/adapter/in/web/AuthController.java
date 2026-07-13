@@ -45,8 +45,8 @@ public class AuthController {
     }
 
     @PostMapping("/guest")
-    public ResponseEntity<AuthResponse> guest(@RequestBody(required = false) GuestRequest request) {
-        return ResponseEntity.ok(guestUseCase.guest(request != null ? request : new GuestRequest(null)));
+    public ResponseEntity<AuthResponse> guest(@Valid @RequestBody GuestRequest request) {
+        return ResponseEntity.ok(guestUseCase.guest(request));
     }
 
     @PostMapping("/refresh")

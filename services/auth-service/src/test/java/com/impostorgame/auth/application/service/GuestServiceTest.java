@@ -14,6 +14,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -58,5 +60,15 @@ class GuestServiceTest {
         assertThat(response.displayName()).isEqualTo("RandomName#1234");
         assertThat(response.refreshToken()).isNull();
         verify(guestNamePort).generate();
+    }
+
+    @Test
+    void guest_generatesRandomName_whenDisplayNameIsBlank() {
+        when(guestNamePort.generate()).thenReturn("Anonymous123");
+        when(jwtPort.generateToken(any(UUID.class), eq("Anonymous123"), eq(Role.GUEST))).thenReturn("jwt");
+
+        AuthResponse response = service().guest(new GuestRequest("   "));
+
+        assertThat(response.displayName()).isEqualTo("Anonymous123");
     }
 }
