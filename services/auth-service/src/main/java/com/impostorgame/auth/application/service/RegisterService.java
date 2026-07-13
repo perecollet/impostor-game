@@ -40,19 +40,13 @@ public class RegisterService implements RegisterUseCase {
             throw new UserAlreadyExistsException(request.email());
         }
 
-        User user = User.builder()
-                .email(request.email())
-                .password(passwordEncoder.encode(request.password()))
-                .displayName(request.displayName())
-                .role(Role.USER)
-                .createdAt(Instant.now())
-                .build();
+        User user = User.create(request.email(), passwordEncoder.encode(request.password()), request.displayName(), Role.USER);
 
         User saved = userRepository.save(user);
-        String jwt = jwtPort.generateToken(saved.getId(), saved.getDisplayName(), Role.USER);
-        String refreshToken = saveRefreshToken(saved.getId());
+        String jwt = jwtPort.generateToken(saved.id(), saved.displayName(), Role.USER);
+        String refreshToken = saveRefreshToken(saved.id());
 
-        return new AuthResponse(jwt, refreshToken, saved.getId(), saved.getDisplayName(), Role.USER.name(), 86400000L);
+        return new AuthResponse(jwt, refreshToken, saved.id(), saved.displayName(), Role.USER.name(), 86400000L);
     }
 
     private String saveRefreshToken(UUID userId) {

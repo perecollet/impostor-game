@@ -38,7 +38,7 @@ public class UserJpaEntity {
     private String email;
 
     @Column(nullable = false)
-    private String password;
+    private String passwordHash;
 
     @Column(name = "display_name", nullable = false)
     private String displayName;

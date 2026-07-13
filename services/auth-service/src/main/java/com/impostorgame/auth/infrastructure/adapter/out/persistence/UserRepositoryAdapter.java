@@ -38,23 +38,16 @@ public class UserRepositoryAdapter implements UserRepository {
 
     private UserJpaEntity toEntity(User user) {
         return UserJpaEntity.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .password(user.getPassword())
-                .displayName(user.getDisplayName())
-                .role(user.getRole())
-                .createdAt(user.getCreatedAt())
+                .id(user.id())
+                .email(user.email())
+                .passwordHash(user.passwordHash())
+                .displayName(user.displayName())
+                .role(user.role())
+                .createdAt(user.createdAt())
                 .build();
     }
 
     private User toDomain(UserJpaEntity entity) {
-        return User.builder()
-                .id(entity.getId())
-                .email(entity.getEmail())
-                .password(entity.getPassword())
-                .displayName(entity.getDisplayName())
-                .role(entity.getRole())
-                .createdAt(entity.getCreatedAt())
-                .build();
+        return User.restore(entity.getId(), entity.getEmail(), entity.getPasswordHash(), entity.getDisplayName(), entity.getRole(), entity.getCreatedAt());
     }
 }

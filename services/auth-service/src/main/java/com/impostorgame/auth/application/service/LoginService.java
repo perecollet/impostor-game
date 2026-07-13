@@ -39,14 +39,14 @@ public class LoginService implements LoginUseCase {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(InvalidCredentialsException::new);
 
-        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+        if (!passwordEncoder.matches(request.password(), user.passwordHash())) {
             throw new InvalidCredentialsException();
         }
 
-        String jwt = jwtPort.generateToken(user.getId(), user.getDisplayName(), Role.USER);
-        String refreshToken = saveRefreshToken(user.getId());
+        String jwt = jwtPort.generateToken(user.id(), user.displayName(), Role.USER);
+        String refreshToken = saveRefreshToken(user.id());
 
-        return new AuthResponse(jwt, refreshToken, user.getId(), user.getDisplayName(), Role.USER.name(), 86400000L);
+        return new AuthResponse(jwt, refreshToken, user.id(), user.displayName(), Role.USER.name(), 86400000L);
     }
 
     private String saveRefreshToken(UUID userId) {

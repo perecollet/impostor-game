@@ -43,11 +43,11 @@ public class RefreshTokenService implements RefreshTokenUseCase {
         User user = userRepository.findById(existing.getUserId())
                 .orElseThrow(() -> new InvalidTokenException("User not found"));
 
-        String newJwt = jwtPort.generateToken(user.getId(), user.getDisplayName(), Role.USER);
-        String newRefreshToken = saveRefreshToken(user.getId());
+        String newJwt = jwtPort.generateToken(user.id(), user.displayName(), Role.USER);
+        String newRefreshToken = saveRefreshToken(user.id());
         refreshTokenRepository.delete(existing);
 
-        return new AuthResponse(newJwt, newRefreshToken, user.getId(), user.getDisplayName(), Role.USER.name(), 86400000L);
+        return new AuthResponse(newJwt, newRefreshToken, user.id(), user.displayName(), Role.USER.name(), 86400000L);
     }
 
     private String saveRefreshToken(UUID userId) {
