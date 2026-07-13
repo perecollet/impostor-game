@@ -36,6 +36,7 @@ Players do not need to register — guests and registered users both play.
 ## Architecture
 
 ### All services — Hexagonal Architecture + DDD
+
 Every service follows this structure:
 
 ```
@@ -69,17 +70,17 @@ Every service follows this structure:
 
 ## Services
 
-| Service | Slice | Port | Architecture |
-|---|---|---|---|
-| discovery-server | 1 | 8761 | Infrastructure only |
-| auth-service | 1 | 8081 | Hexagonal + DDD |
-| game-service | 1+3 | 8082 | Hexagonal + DDD |
-| word-service | 2 | 8083 | Hexagonal + DDD |
-| voting-service | 3 | 8084 | Hexagonal + DDD |
-| player-service | 3 | 8085 | Hexagonal + DDD |
-| notification-service | 4 | 8086 | Hexagonal + DDD |
-| api-gateway | 5 | 8080 | Infrastructure only |
-| config-server | 5 | 8888 | Infrastructure only |
+| Service              | Slice | Port | Architecture        |
+|----------------------|-------|------|---------------------|
+| discovery-server     | 1     | 8761 | Infrastructure only |
+| auth-service         | 1     | 8081 | Hexagonal + DDD     |
+| game-service         | 1+3   | 8082 | Hexagonal + DDD     |
+| word-service         | 2     | 8083 | Hexagonal + DDD     |
+| voting-service       | 3     | 8084 | Hexagonal + DDD     |
+| player-service       | 3     | 8085 | Hexagonal + DDD     |
+| notification-service | 4     | 8086 | Hexagonal + DDD     |
+| api-gateway          | 5     | 8080 | Infrastructure only |
+| config-server        | 5     | 8888 | Infrastructure only |
 
 ---
 
@@ -99,24 +100,28 @@ JWT claims consumed downstream: `sub` → playerId, `displayName`, `role` (`GUES
 
 ## Guest vs registered players
 
-| | Guest | Registered |
-|---|---|---|
-| JWT role | `GUEST` | `USER` |
-| Expiry | 4h, no refresh | 24h + refresh token |
-| Persisted | Never | Yes |
-| Play game | ✅ | ✅ |
-| Stats/leaderboard | ❌ | ✅ |
-| Reconnect | ❌ | ✅ |
-| Convert to account | ✅ | — |
+|                    | Guest          | Registered          |
+|--------------------|----------------|---------------------|
+| JWT role           | `GUEST`        | `USER`              |
+| Expiry             | 4h, no refresh | 24h + refresh token |
+| Persisted          | Never          | Yes                 |
+| Play game          | ✅              | ✅                   |
+| Stats/leaderboard  | ❌              | ✅                   |
+| Reconnect          | ❌              | ✅                   |
+| Convert to account | ✅              | —                   |
 
 `PlayerContext` sealed interface used in `game-service` and `voting-service`:
+
 ```java
 public sealed interface PlayerContext permits RegisteredPlayer, GuestPlayer {
     String id();
+
     String displayName();
+
     boolean isGuest();
 }
 ```
+
 Never extract this to a shared module — duplicate it per service.
 
 ---
@@ -133,11 +138,11 @@ they publish Kafka events and `game-service` reacts.
 
 ```java
 GamePhase next = switch (room.phase()) {
-    case LOBBY           -> event == GAME_STARTED  ? WORD_ASSIGNMENT : invalid(event);
-    case WORD_ASSIGNMENT -> event == WORDS_DEALT   ? DISCUSSION      : invalid(event);
-    case DISCUSSION      -> event == TIMER_EXPIRED ? VOTING          : invalid(event);
-    case VOTING          -> event == VOTE_COMPLETE ? RESULTS         : invalid(event);
-    case RESULTS         -> event == RESET         ? LOBBY           : invalid(event);
+    case LOBBY -> event == GAME_STARTED ? WORD_ASSIGNMENT : invalid(event);
+    case WORD_ASSIGNMENT -> event == WORDS_DEALT ? DISCUSSION : invalid(event);
+    case DISCUSSION -> event == TIMER_EXPIRED ? VOTING : invalid(event);
+    case VOTING -> event == VOTE_COMPLETE ? RESULTS : invalid(event);
+    case RESULTS -> event == RESET ? LOBBY : invalid(event);
 };
 ```
 
@@ -145,11 +150,11 @@ GamePhase next = switch (room.phase()) {
 
 ## Kafka topics
 
-| Topic | Producer | Consumers | Events |
-|---|---|---|---|
-| `game.events` | game-service | notification-service, player-service | `GAME_STARTED`, `PHASE_CHANGED`, `PLAYER_ELIMINATED`, `GAME_ENDED` |
-| `voting.results` | voting-service | game-service, notification-service | `VOTING_FINISHED` |
-| `player.actions` | game-service | notification-service, player-service | `PLAYER_JOINED`, `PLAYER_LEFT` |
+| Topic            | Producer       | Consumers                            | Events                                                             |
+|------------------|----------------|--------------------------------------|--------------------------------------------------------------------|
+| `game.events`    | game-service   | notification-service, player-service | `GAME_STARTED`, `PHASE_CHANGED`, `PLAYER_ELIMINATED`, `GAME_ENDED` |
+| `voting.results` | voting-service | game-service, notification-service   | `VOTING_FINISHED`                                                  |
+| `player.actions` | game-service   | notification-service, player-service | `PLAYER_JOINED`, `PLAYER_LEFT`                                     |
 
 **Ownership principle — each service publishes only events about what it owns.**
 
@@ -170,14 +175,14 @@ GamePhase next = switch (room.phase()) {
 
 Each service owns its own isolated database. No cross-service DB access ever.
 
-| Service | PostgreSQL | Redis |
-|---|---|---|
-| auth-service | auth_db | — |
-| game-service | game_db (rounds only) | room state (TTL) |
-| word-service | word_db | assignments (TTL) |
-| voting-service | voting_db | active vote (TTL) |
-| player-service | player_db | — |
-| notification-service | — | pub/sub relay |
+| Service              | PostgreSQL            | Redis             |
+|----------------------|-----------------------|-------------------|
+| auth-service         | auth_db               | —                 |
+| game-service         | game_db (rounds only) | room state (TTL)  |
+| word-service         | word_db               | assignments (TTL) |
+| voting-service       | voting_db             | active vote (TTL) |
+| player-service       | player_db             | —                 |
+| notification-service | —                     | pub/sub relay     |
 
 Game rooms live in Redis during active play. Only completed round summaries go to PostgreSQL.
 
@@ -193,13 +198,13 @@ active vote), the adapter lives in `infrastructure/adapter/out/persistence/` —
 
 ## Iterative delivery — 5 slices
 
-| Slice | Done when | Status |
-|---|---|---|
-| 1 — "A room exists" | Player gets token, creates/joins room, appears in Eureka | ✅ Verified end-to-end |
-| 2 — "Words assigned" | Host starts game, words assigned, one player gets impostor word | ← current |
-| 3 — "Full round playable" | Lobby → words → discussion → voting → results | |
-| 4 — "Feels like a game" | Live WebSocket updates, no polling | |
-| 5 — "Production ready" | Gateway, config server, CI/CD, tracing | |
+| Slice                     | Done when                                                       | Status                |
+|---------------------------|-----------------------------------------------------------------|-----------------------|
+| 1 — "A room exists"       | Player gets token, creates/joins room, appears in Eureka        | ✅ Verified end-to-end |
+| 2 — "Words assigned"      | Host starts game, words assigned, one player gets impostor word | ← current             |
+| 3 — "Full round playable" | Lobby → words → discussion → voting → results                   |                       |
+| 4 — "Feels like a game"   | Live WebSocket updates, no polling                              |                       |
+| 5 — "Production ready"    | Gateway, config server, CI/CD, tracing                          |                       |
 
 ---
 
@@ -217,20 +222,22 @@ active vote), the adapter lives in `infrastructure/adapter/out/persistence/` —
 
 ## Environment and profiles
 
-| File | Purpose | Committed |
-|---|---|---|
-| `application.yaml` | Shared non-sensitive config | ✅ |
-| `application-local.yaml` | Local dev URLs (`localhost`) | ✅ |
-| `application-docker.yaml` | Docker/homelab URLs (service names) | ✅ |
-| `.env` | Secrets and passwords | ❌ Never |
+| File                      | Purpose                             | Committed |
+|---------------------------|-------------------------------------|-----------|
+| `application.yaml`        | Shared non-sensitive config         | ✅         |
+| `application-local.yaml`  | Local dev URLs (`localhost`)        | ✅         |
+| `application-docker.yaml` | Docker/homelab URLs (service names) | ✅         |
+| `.env`                    | Secrets and passwords               | ❌ Never   |
 
 Extension is `.yaml`, not `.yml`. Consistently.
 
 **Run locally** — load the env file first, then activate the profile:
+
 ```bash
 set -a; source ../../.env; set +a
 mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
+
 **Run in Docker:** `SPRING_PROFILES_ACTIVE=docker`
 
 > Between-session startup failures are almost always **execution context** issues —
@@ -259,7 +266,15 @@ mvn spring-boot:run -Dspring-boot.run.profiles=local
 - Inyectable classes (application services, adapters, controllers):
   explicit constructor, `private final` fields, no `@RequiredArgsConstructor`.
   Single constructor → Spring injects without `@Autowired`.
-- Lombok allowed only for `@Getter`/`@Builder` on DTOs and Redis entities.
+- **Lombok is allowed only on structural types**: classes that carry data and hold
+  no invariants — DTOs and persistence entities (JPA *and* Redis).
+  Allowed there: `@Getter`, `@Setter`, `@Builder`, `@AllArgsConstructor`,
+  `@NoArgsConstructor`. JPA *requires* a no-args constructor; a persistence entity
+  is a mapping row, not the aggregate — it has no rules to protect.
+- **Lombok is forbidden on behavioural types**: anything in `domain/`, and any
+  injectable class (application services, adapters, controllers).
+  The criterion is not the technology, it is whether the class has invariants
+  or collaborators to protect.
 - domain/ stays Lombok-free: constructors/factories are hand-written
   because they validate invariants.
 - `@Repository` on all persistence adapters (including Redis) for semantic uniformity.
