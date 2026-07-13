@@ -26,5 +26,6 @@ eureka:
 
 jwt:
   kid: 'auth-key-1'
-  expiration: 86400000       # 24h in milliseconds
-  guest-expiration: 14400000 # 4h in milliseconds
+  expiration: 24h
+  guest-expiration: 4h
+  refresh-expiration: 30d

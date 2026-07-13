@@ -1,0 +1,11 @@
+jwt:
+  kid: test-key
+  expiration: 24h
+  guest-expiration: 4h
+  refresh-expiration: 30d
+  private-key-location: classpath:keys/test-private.pem
+  public-key-location: classpath:keys/test-public.pem
+
+eureka:
+  client:
+    enabled: false

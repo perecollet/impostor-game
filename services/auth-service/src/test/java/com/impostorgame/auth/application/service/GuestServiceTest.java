@@ -1,10 +1,12 @@
 package com.impostorgame.auth.application.service;
 
+import com.impostorgame.auth.TestJwtProperties;
 import com.impostorgame.auth.application.dto.AuthResponse;
 import com.impostorgame.auth.application.dto.GuestRequest;
 import com.impostorgame.auth.domain.model.Role;
 import com.impostorgame.auth.domain.port.out.GuestNamePort;
 import com.impostorgame.auth.domain.port.out.JwtPort;
+import com.impostorgame.auth.infrastructure.config.JwtProperties;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,13 +28,17 @@ class GuestServiceTest {
     @Mock private JwtPort jwtPort;
     @Mock private GuestNamePort guestNamePort;
 
-    @InjectMocks private GuestService guestService;
+    private final JwtProperties jwtProperties = TestJwtProperties.create();
+
+    private GuestService service() {
+        return new GuestService(jwtPort, guestNamePort, jwtProperties);
+    }
 
     @Test
     void guest_usesProvidedDisplayName() {
         when(jwtPort.generateToken(any(), eq("SpecificName"), eq(Role.GUEST))).thenReturn("guest-jwt");
 
-        AuthResponse response = guestService.guest(new GuestRequest("SpecificName"));
+        AuthResponse response = service().guest(new GuestRequest("SpecificName"));
 
         assertThat(response.token()).isEqualTo("guest-jwt");
         assertThat(response.displayName()).isEqualTo("SpecificName");
@@ -47,7 +53,7 @@ class GuestServiceTest {
         when(guestNamePort.generate()).thenReturn("RandomName#1234");
         when(jwtPort.generateToken(any(), eq("RandomName#1234"), eq(Role.GUEST))).thenReturn("guest-jwt");
 
-        AuthResponse response = guestService.guest(new GuestRequest(null));
+        AuthResponse response = service().guest(new GuestRequest(null));
 
         assertThat(response.displayName()).isEqualTo("RandomName#1234");
         assertThat(response.refreshToken()).isNull();

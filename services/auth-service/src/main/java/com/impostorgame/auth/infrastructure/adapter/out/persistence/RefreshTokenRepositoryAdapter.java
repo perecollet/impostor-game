@@ -20,25 +20,25 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository {
 
     @Override
     public RefreshToken save(RefreshToken token) {
-        UserJpaEntity userRef = userJpaRepository.getReferenceById(token.getUserId());
+        UserJpaEntity userRef = userJpaRepository.getReferenceById(token.userId());
         RefreshTokenJpaEntity entity = RefreshTokenJpaEntity.builder()
-                .id(token.getId())
+                .id(token.id())
                 .user(userRef)
-                .token(token.getToken())
-                .expiresAt(token.getExpiresAt())
-                .createdAt(token.getCreatedAt())
+                .tokenHash(token.tokenHash())
+                .expiresAt(token.expiresAt())
+                .createdAt(token.createdAt())
                 .build();
         return toDomain(jpaRepository.save(entity));
     }
 
     @Override
-    public Optional<RefreshToken> findByToken(String token) {
-        return jpaRepository.findByToken(token).map(this::toDomain);
+    public Optional<RefreshToken> findByTokenHash(String token) {
+        return jpaRepository.findByTokenHash(token).map(this::toDomain);
     }
 
     @Override
     public void delete(RefreshToken token) {
-        jpaRepository.deleteById(token.getId());
+        jpaRepository.deleteById(token.id());
     }
 
     @Override
@@ -47,12 +47,7 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository {
     }
 
     private RefreshToken toDomain(RefreshTokenJpaEntity entity) {
-        return RefreshToken.builder()
-                .id(entity.getId())
-                .userId(entity.getUser().getId())
-                .token(entity.getToken())
-                .expiresAt(entity.getExpiresAt())
-                .createdAt(entity.getCreatedAt())
-                .build();
+        return RefreshToken.restore(entity.getId(), entity.getUser().getId(), entity.getTokenHash(),
+                entity.getExpiresAt(), entity.getCreatedAt());
     }
 }

@@ -6,6 +6,7 @@ import com.impostorgame.auth.domain.model.Role;
 import com.impostorgame.auth.domain.port.in.GuestUseCase;
 import com.impostorgame.auth.domain.port.out.GuestNamePort;
 import com.impostorgame.auth.domain.port.out.JwtPort;
+import com.impostorgame.auth.infrastructure.config.JwtProperties;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -14,11 +15,13 @@ import java.util.UUID;
 public class GuestService implements GuestUseCase {
 
     private final JwtPort jwtPort;
+    private final JwtProperties jwtProperties;
     private final GuestNamePort guestNamePort;
 
-    public GuestService(JwtPort jwtPort, GuestNamePort guestNamePort) {
+    public GuestService(JwtPort jwtPort, GuestNamePort guestNamePort, JwtProperties jwtProperties) {
         this.jwtPort = jwtPort;
         this.guestNamePort = guestNamePort;
+        this.jwtProperties = jwtProperties;
     }
 
     @Override
@@ -30,6 +33,6 @@ public class GuestService implements GuestUseCase {
         UUID guestId = UUID.randomUUID();
         String jwt = jwtPort.generateToken(guestId, displayName, Role.GUEST);
 
-        return new AuthResponse(jwt, null, guestId, displayName, Role.GUEST.name(), 14400000L);
+        return new AuthResponse(jwt, null, guestId, displayName, Role.GUEST.name(), jwtProperties.guestExpiration().toMillis());
     }
 }

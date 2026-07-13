@@ -11,6 +11,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
 import java.util.UUID;
@@ -43,16 +45,17 @@ public class JwtAdapter implements JwtPort {
 
     @Override
     public String generateToken(UUID userId, String displayName, Role role) {
-        long expiration = role == Role.GUEST
+        Duration expiration = role == Role.GUEST
                 ? jwtProperties.guestExpiration()
                 : jwtProperties.expiration();
+        Instant now = Instant.now();
         return Jwts.builder()
                 .header().add("kid", jwtProperties.kid()).and()
                 .subject(userId.toString())
                 .claim("role", role.name())
                 .claim("displayName", displayName)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expiration))
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plus(expiration)))
                 .signWith(privateKey, Jwts.SIG.RS256)
                 .compact();
     }

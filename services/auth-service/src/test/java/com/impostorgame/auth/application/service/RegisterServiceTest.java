@@ -1,5 +1,6 @@
 package com.impostorgame.auth.application.service;
 
+import com.impostorgame.auth.TestJwtProperties;
 import com.impostorgame.auth.application.dto.AuthResponse;
 import com.impostorgame.auth.application.dto.RegisterRequest;
 import com.impostorgame.auth.domain.exception.UserAlreadyExistsException;
@@ -9,6 +10,7 @@ import com.impostorgame.auth.domain.model.User;
 import com.impostorgame.auth.domain.port.out.JwtPort;
 import com.impostorgame.auth.domain.port.out.RefreshTokenRepository;
 import com.impostorgame.auth.domain.port.out.UserRepository;
+import com.impostorgame.auth.infrastructure.config.JwtProperties;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,8 +43,11 @@ class RegisterServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
-    @InjectMocks
-    private RegisterService registerService;
+    private final JwtProperties jwtProperties = TestJwtProperties.create();
+
+    private RegisterService service() {
+        return new RegisterService(userRepository, refreshTokenRepository, jwtPort, passwordEncoder, jwtProperties);
+    }
 
     @Test
     void register_createsUserAndReturnsTokens() {
@@ -54,7 +59,7 @@ class RegisterServiceTest {
         when(jwtPort.generateToken(any(UUID.class), eq("Alice"), eq(Role.USER))).thenReturn("jwt-token");
         when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        AuthResponse response = registerService.register(request);
+        AuthResponse response = service().register(request);
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(captor.capture());
@@ -73,7 +78,7 @@ class RegisterServiceTest {
     void register_throwsUserAlreadyExistsException_whenEmailTaken() {
         when(userRepository.existsByEmail("user@example.com")).thenReturn(true);
 
-        assertThatThrownBy(() -> registerService.register(
+        assertThatThrownBy(() -> service().register(
                 new RegisterRequest("user@example.com", "password123", "Alice")))
                 .isInstanceOf(UserAlreadyExistsException.class);
 
