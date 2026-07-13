@@ -39,10 +39,8 @@ class RefreshTokenServiceTest {
     @Test
     void refresh_rotatesTokenAndReturnsNewJwt() {
         UUID userId = UUID.randomUUID();
-        User user = User.builder()
-                .id(userId).email("user@example.com").password("hashed")
-                .displayName("Alice").role(Role.USER).createdAt(Instant.now())
-                .build();
+        User user = User.restore(userId, "user@example.com", "hashed", "Alice", Role.USER, Instant.now());
+
         RefreshToken existing = RefreshToken.builder()
                 .id(UUID.randomUUID()).userId(userId).token("old-token")
                 .expiresAt(Instant.now().plusSeconds(3600)).createdAt(Instant.now())

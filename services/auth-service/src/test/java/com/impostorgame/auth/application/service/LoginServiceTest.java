@@ -30,20 +30,22 @@ import static org.mockito.Mockito.when;
 @Tag("unit")
 class LoginServiceTest {
 
-    @Mock private UserRepository userRepository;
-    @Mock private RefreshTokenRepository refreshTokenRepository;
-    @Mock private JwtPort jwtPort;
-    @Mock private PasswordEncoder passwordEncoder;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private RefreshTokenRepository refreshTokenRepository;
+    @Mock
+    private JwtPort jwtPort;
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
-    @InjectMocks private LoginService loginService;
+    @InjectMocks
+    private LoginService loginService;
 
     @Test
     void login_returnsTokensForValidCredentials() {
         UUID userId = UUID.randomUUID();
-        User user = User.builder()
-                .id(userId).email("user@example.com").password("hashed")
-                .displayName("Alice").role(Role.USER).createdAt(Instant.now())
-                .build();
+        User user = User.restore(userId, "user@example.com", "hashed", "Alice", Role.USER, Instant.now());
 
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
@@ -68,10 +70,7 @@ class LoginServiceTest {
     @Test
     void login_throwsInvalidCredentials_whenPasswordWrong() {
         UUID userId = UUID.randomUUID();
-        User user = User.builder()
-                .id(userId).email("user@example.com").password("hashed")
-                .displayName("Alice").role(Role.USER).createdAt(Instant.now())
-                .build();
+        User user = User.restore(userId, "user@example.com", "hashed", "Alice", Role.USER, Instant.now());
 
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrongpass", "hashed")).thenReturn(false);
