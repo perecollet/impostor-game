@@ -1,5 +1,6 @@
 package com.impostorgame.auth.application.service;
 
+import com.impostorgame.auth.TestJwtProperties;
 import com.impostorgame.auth.application.dto.AuthResponse;
 import com.impostorgame.auth.application.dto.RefreshTokenRequest;
 import com.impostorgame.auth.application.security.TokenHasher;
@@ -14,12 +15,9 @@ import com.impostorgame.auth.infrastructure.config.JwtProperties;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.core.io.ByteArrayResource;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,6 +25,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -34,26 +33,15 @@ import static org.mockito.Mockito.when;
 @Tag("unit")
 class RefreshTokenServiceTest {
 
-    private static final Duration EXPIRATION = Duration.ofHours(24);
-    private static final Duration REFRESH_EXPIRATION = Duration.ofDays(30);
-
     @Mock private RefreshTokenRepository refreshTokenRepository;
     @Mock private UserRepository userRepository;
     @Mock private JwtPort jwtPort;
+    @Mock private RefreshTokenIssuer refreshTokenIssuer;
 
-    private RefreshTokenService refreshTokenService;
-
-    private final JwtProperties jwtProperties = new JwtProperties(
-            new ByteArrayResource("private".getBytes()),
-            new ByteArrayResource("public".getBytes()),
-            "auth-key-1",
-            EXPIRATION,
-            Duration.ofHours(4),
-            REFRESH_EXPIRATION
-    );
+    private final JwtProperties jwtProperties = TestJwtProperties.create();
 
     private RefreshTokenService service() {
-        return new RefreshTokenService(refreshTokenRepository, jwtPort, userRepository, jwtProperties);
+        return new RefreshTokenService(refreshTokenRepository, jwtPort, userRepository, jwtProperties, refreshTokenIssuer);
     }
 
     @Test
@@ -70,17 +58,20 @@ class RefreshTokenServiceTest {
         when(refreshTokenRepository.findByTokenHash(TokenHasher.sha256(plain))).thenReturn(Optional.of(existing));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(jwtPort.generateToken(userId, "Alice", Role.USER)).thenReturn("new-jwt");
+        when(refreshTokenIssuer.issue(userId)).thenReturn("new-refresh-token");
 
         AuthResponse response = service().refresh(new RefreshTokenRequest(plain));
 
         assertThat(response.token()).isEqualTo("new-jwt");
-        assertThat(response.refreshToken()).isNotNull();
-        assertThat(response.expiresIn()).isEqualTo(EXPIRATION.toMillis());
+        assertThat(response.refreshToken()).isEqualTo("new-refresh-token");
+        assertThat(response.playerId()).isEqualTo(userId);
+        assertThat(response.expiresIn()).isEqualTo(TestJwtProperties.EXPIRATION.toMillis());
+
         verify(refreshTokenRepository).delete(existing);
     }
 
     @Test
-    void refresh_persistsHashAndReturnsPlainToken() {
+    void refresh_looksUpTokenByItsHashNotByPlainValue() {
         UUID userId = UUID.randomUUID();
         String plain = "old-token";
         Instant now = Instant.now();
@@ -93,25 +84,24 @@ class RefreshTokenServiceTest {
         when(refreshTokenRepository.findByTokenHash(TokenHasher.sha256(plain))).thenReturn(Optional.of(existing));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(jwtPort.generateToken(userId, "Alice", Role.USER)).thenReturn("new-jwt");
+        when(refreshTokenIssuer.issue(userId)).thenReturn("new-refresh-token");
 
-        AuthResponse response = service().refresh(new RefreshTokenRequest(plain));
+        service().refresh(new RefreshTokenRequest(plain));
 
-        ArgumentCaptor<RefreshToken> captor = ArgumentCaptor.forClass(RefreshToken.class);
-        verify(refreshTokenRepository).save(captor.capture());
-        RefreshToken persisted = captor.getValue();
-
-        assertThat(persisted.tokenHash()).isEqualTo(TokenHasher.sha256(response.refreshToken()));
-        assertThat(persisted.tokenHash()).isNotEqualTo(response.refreshToken());
-        assertThat(persisted.userId()).isEqualTo(userId);
+        verify(refreshTokenRepository).findByTokenHash(TokenHasher.sha256(plain));
+        verify(refreshTokenRepository, never()).findByTokenHash(plain);
     }
 
     @Test
     void refresh_throwsInvalidToken_whenTokenNotFound() {
         when(refreshTokenRepository.findByTokenHash(any())).thenReturn(Optional.empty());
         RefreshTokenService target = service();
+        var request = new RefreshTokenRequest("bad-token");
 
-        assertThatThrownBy(() -> target.refresh(new RefreshTokenRequest("bad-token")))
+        assertThatThrownBy(() -> target.refresh(request))
                 .isInstanceOf(InvalidTokenException.class);
+
+        verify(refreshTokenIssuer, never()).issue(any());
     }
 
     @Test
@@ -126,10 +116,12 @@ class RefreshTokenServiceTest {
 
         when(refreshTokenRepository.findByTokenHash(TokenHasher.sha256(plain))).thenReturn(Optional.of(expired));
         RefreshTokenService target = service();
+        var request = new RefreshTokenRequest(plain);
 
-        assertThatThrownBy(() -> target.refresh(new RefreshTokenRequest(plain)))
+        assertThatThrownBy(() -> target.refresh(request))
                 .isInstanceOf(InvalidTokenException.class);
 
         verify(refreshTokenRepository).delete(expired);
+        verify(refreshTokenIssuer, never()).issue(any());
     }
 }

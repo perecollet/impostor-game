@@ -23,13 +23,15 @@ public class RefreshTokenService implements RefreshTokenUseCase {
     private final UserRepository userRepository;
     private final JwtPort jwtPort;
     private final JwtProperties jwtProperties;
+    private final RefreshTokenIssuer refreshTokenIssuer;
 
     public RefreshTokenService(RefreshTokenRepository refreshTokenRepository, JwtPort jwtPort,
-                               UserRepository userRepository, JwtProperties jwtProperties) {
+                               UserRepository userRepository, JwtProperties jwtProperties, RefreshTokenIssuer refreshTokenIssuer) {
         this.refreshTokenRepository = refreshTokenRepository;
         this.jwtPort = jwtPort;
         this.userRepository = userRepository;
         this.jwtProperties = jwtProperties;
+        this.refreshTokenIssuer = refreshTokenIssuer;
     }
 
     @Override
@@ -47,15 +49,9 @@ public class RefreshTokenService implements RefreshTokenUseCase {
                 .orElseThrow(() -> new InvalidTokenException("User not found"));
 
         String newJwt = jwtPort.generateToken(user.id(), user.displayName(), user.role());
-        String newRefreshToken = saveRefreshToken(user.id());
+        String newRefreshToken = refreshTokenIssuer.issue(user.id());
         refreshTokenRepository.delete(existing);
 
         return new AuthResponse(newJwt, newRefreshToken, user.id(), user.displayName(), user.role().name(), jwtProperties.expiration().toMillis());
-    }
-
-    private String saveRefreshToken(UUID userId) {
-        String plain = UUID.randomUUID().toString();
-        refreshTokenRepository.save(RefreshToken.create(userId, TokenHasher.sha256(plain), jwtProperties.refreshExpiration()));
-        return plain;
     }
 }
