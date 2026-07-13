@@ -80,6 +80,11 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.14.0</version>
                 </plugin>
+                <plugin>                                          <!-- ← nuevo -->
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.5</version>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
