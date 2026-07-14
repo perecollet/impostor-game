@@ -30,11 +30,4 @@ class RoomPlayerTest {
         assertThatThrownBy(() -> RoomPlayer.of(PlayerId.of("user-1"), "  ", false, false))
                 .isInstanceOf(InvalidRoomPlayerException.class);
     }
-
-    @Test
-    void shouldBeEqualWhenSameId() {
-        RoomPlayer a = RoomPlayer.of(PlayerId.of("user-1"), "Alice", true, false);
-        RoomPlayer b = RoomPlayer.of(PlayerId.of("user-1"), "Alicia", false, true);
-        assertThat(a).isEqualTo(b);
-    }
 }

@@ -31,7 +31,7 @@ public class CreateRoomService implements CreateRoomUseCase {
     }
 
     private RoomResponse toResponse(Room room) {
-        List<PlayerResponse> players = room.players().stream()
+        List<PlayerResponse> players = room.players().values().stream()
                 .map(p  -> new PlayerResponse(p.id().value(), p.displayName(), p.isHost(), p.isGuest()))
                 .toList();
         return new RoomResponse(room.code().value(), room.phase().name(), players);

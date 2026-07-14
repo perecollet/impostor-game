@@ -8,8 +8,8 @@ import com.impostorgame.game.domain.model.RoomPlayer;
 import com.impostorgame.game.domain.port.out.RoomRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Repository
@@ -33,9 +33,9 @@ public class RoomRepositoryAdapter implements RoomRepository {
     }
 
     private RoomRedisEntity toEntity(Room room) {
-        List<PlayerRedisEntity> players = room.players().stream()
+        Map<String, PlayerRedisEntity> players = room.players().values().stream()
                 .map(p -> new PlayerRedisEntity(p.id().value(), p.displayName(), p.isHost(), p.isGuest()))
-                .toList();
+                .collect(Collectors.toMap(PlayerRedisEntity::getId, Function.identity()));
 
         return RoomRedisEntity.builder()
                 .code(room.code().value())
@@ -47,9 +47,9 @@ public class RoomRepositoryAdapter implements RoomRepository {
 
     private Room toDomain(RoomRedisEntity entity) {
         RoomCode code = RoomCode.of(entity.getCode());
-        Set<RoomPlayer> players = entity.getPlayers().stream()
+        Map<PlayerId, RoomPlayer> players = entity.getPlayers().values().stream()
                 .map(p -> RoomPlayer.of(PlayerId.of(p.getId()), p.getDisplayName(), p.isHost(), p.isGuest()))
-                .collect(Collectors.toSet());
-        return Room.restore(code, GamePhase.valueOf(entity.getPhase()),  players);
+                .collect(Collectors.toMap(RoomPlayer::id, Function.identity()));
+        return Room.restore(code, GamePhase.valueOf(entity.getPhase()), players);
     }
 }

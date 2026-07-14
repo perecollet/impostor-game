@@ -8,7 +8,7 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 
-import java.util.List;
+import java.util.Map;
 
 @RedisHash(value = "room", timeToLive = 3600)
 @Getter
@@ -20,6 +20,6 @@ public class RoomRedisEntity {
     @Id
     private String code;
     private String phase;
-    private List<PlayerRedisEntity> players;
+    private Map<String, PlayerRedisEntity> players;
 
 }

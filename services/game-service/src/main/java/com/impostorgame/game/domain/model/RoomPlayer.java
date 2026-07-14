@@ -2,28 +2,40 @@ package com.impostorgame.game.domain.model;
 
 import com.impostorgame.game.domain.exception.InvalidRoomPlayerException;
 
-public record RoomPlayer(
-        PlayerId id,
-        String displayName,
-        boolean isHost,
-        boolean isGuest
-) {
-    public RoomPlayer {
+public class RoomPlayer {
+
+    private final PlayerId id;
+    private final String displayName;
+    private final boolean isHost;
+    private final boolean isGuest;
+
+    private RoomPlayer(PlayerId id, String displayName, boolean isHost, boolean isGuest) {
         if (id == null) throw new InvalidRoomPlayerException("id must not be null");
         if (displayName == null || displayName.isBlank()) throw new InvalidRoomPlayerException("displayName must not be null  or blank");
+
+        this.id = id;
+        this.displayName = displayName;
+        this.isHost = isHost;
+        this.isGuest = isGuest;
     }
 
     public static RoomPlayer of(PlayerId id, String displayName, boolean isHost, boolean isGuest) {
         return new RoomPlayer(id, displayName, isHost, isGuest);
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        return (obj instanceof RoomPlayer roomPlayer) && roomPlayer.id.equals(id);
+    public PlayerId id() {
+        return id;
     }
 
-    @Override
-    public int hashCode() {
-        return id.hashCode();
+    public String displayName() {
+        return displayName;
+    }
+
+    public boolean isHost() {
+        return isHost;
+    }
+
+    public boolean isGuest() {
+        return isGuest;
     }
 }

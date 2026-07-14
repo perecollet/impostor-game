@@ -4,7 +4,7 @@ import com.impostorgame.game.domain.exception.InvalidRoomException;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import java.util.Set;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -25,7 +25,7 @@ class RoomTest {
         Room room = Room.create(RoomCode.generate(), host());
 
         assertThat(room.phase()).isEqualTo(GamePhase.LOBBY);
-        assertThat(room.players()).contains(host());
+        assertThat(room.players()).containsKey(host().id());
     }
 
     @Test
@@ -53,7 +53,7 @@ class RoomTest {
         RoomPlayer notMarked = RoomPlayer.of(PlayerId.of("host-1"), "Alice", false, false);
         Room room = Room.create(RoomCode.generate(), notMarked);
 
-        RoomPlayer stored = room.players().iterator().next();
+        RoomPlayer stored = room.players().get(notMarked.id());
         assertThat(stored.isHost()).isTrue();
     }
 
@@ -78,6 +78,21 @@ class RoomTest {
     }
 
     @Test
+    void join_updatesExistingPlayerInsteadOfIgnoringTheRejoin() {
+        Room room = Room.create(RoomCode.generate(), host());
+        RoomPlayer bob = guest("p2", "Bob");
+        room.join(bob);
+
+        RoomPlayer promotedBob = RoomPlayer.of(bob.id(), "Bobby", true, false);
+        room.join(promotedBob);
+
+        RoomPlayer stored = room.players().get(bob.id());
+        assertThat(room.players()).hasSize(2);
+        assertThat(stored.displayName()).isEqualTo("Bobby");
+        assertThat(stored.isHost()).isTrue();
+    }
+
+    @Test
     void leave_removesPlayer() {
         Room room = Room.create(RoomCode.generate(), host());
         RoomPlayer bob = guest("p2", "Bob");
@@ -85,16 +100,15 @@ class RoomTest {
 
         room.leave(bob.id());
 
-        assertThat(room.players()).doesNotContain(bob);
+        assertThat(room.players()).doesNotContainKey(bob.id());
     }
 
     @Test
     void restore_rebuildsRoomWithGivenPhaseAndPlayers() {
         RoomCode code = RoomCode.generate();
-        Set<RoomPlayer> players = Set.of(
-                RoomPlayer.of(PlayerId.of("host-1"), "Alice", true, false),
-                RoomPlayer.of(PlayerId.of("p2"), "Bob", false, false)
-        );
+        RoomPlayer alice = RoomPlayer.of(PlayerId.of("host-1"), "Alice", true, false);
+        RoomPlayer bob = RoomPlayer.of(PlayerId.of("p2"), "Bob", false, false);
+        Map<PlayerId, RoomPlayer> players = Map.of(alice.id(), alice, bob.id(), bob);
 
         Room room = Room.restore(code, GamePhase.DISCUSSION, players);
 
@@ -105,21 +119,23 @@ class RoomTest {
 
     @Test
     void restore_rejectsNullCode() {
-        Set<RoomPlayer> players = Set.of(RoomPlayer.of(PlayerId.of("host-1"), "Alice", true, false));
+        RoomPlayer alice = RoomPlayer.of(PlayerId.of("host-1"), "Alice", true, false);
+        Map<PlayerId, RoomPlayer> players = Map.of(alice.id(), alice);
         assertThatThrownBy(() -> Room.restore(null, GamePhase.LOBBY, players))
                 .isInstanceOf(InvalidRoomException.class);
     }
 
     @Test
     void restore_rejectsNullPhase() {
-        Set<RoomPlayer> players = Set.of(RoomPlayer.of(PlayerId.of("host-1"), "Alice", true, false));
+        RoomPlayer alice = RoomPlayer.of(PlayerId.of("host-1"), "Alice", true, false);
+        Map<PlayerId, RoomPlayer> players = Map.of(alice.id(), alice);
         assertThatThrownBy(() -> Room.restore(RoomCode.generate(), null, players))
                 .isInstanceOf(InvalidRoomException.class);
     }
 
     @Test
     void restore_rejectsEmptyPlayers() {
-        assertThatThrownBy(() -> Room.restore(RoomCode.generate(), GamePhase.LOBBY, Set.of()))
+        assertThatThrownBy(() -> Room.restore(RoomCode.generate(), GamePhase.LOBBY, Map.of()))
                 .isInstanceOf(InvalidRoomException.class);
     }
 
