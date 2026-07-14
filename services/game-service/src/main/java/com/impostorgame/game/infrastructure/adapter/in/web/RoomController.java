@@ -1,5 +1,6 @@
 package com.impostorgame.game.infrastructure.adapter.in.web;
 
+import com.impostorgame.game.domain.model.Role;
 import com.impostorgame.game.domain.port.in.CreateRoomUseCase;
 import com.impostorgame.game.domain.port.in.RoomResponse;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +36,7 @@ public class RoomController {
     private CreateRoomUseCase.CreateRoomCommand toCommand (Jwt jwt){
         String playerId = jwt.getSubject();
         String displayName = jwt.getClaimAsString("displayName");
-        boolean isGuest = jwt.getClaimAsString("role").equals("GUEST");
+        boolean isGuest = Role.GUEST.name().equals(jwt.getClaimAsString("role"));
 
         return new CreateRoomUseCase.CreateRoomCommand(playerId, displayName, isGuest);
     }
