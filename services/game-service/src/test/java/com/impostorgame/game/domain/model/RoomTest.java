@@ -1,5 +1,6 @@
 package com.impostorgame.game.domain.model;
 
+import com.impostorgame.game.domain.exception.InvalidRoomException;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -38,13 +39,13 @@ class RoomTest {
     @Test
     void create_rejectsNullCode() {
         assertThatThrownBy(() -> Room.create(null, host()))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(InvalidRoomException.class);
     }
 
     @Test
     void create_rejectsNullHost() {
         assertThatThrownBy(() -> Room.create(RoomCode.generate(), null))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(InvalidRoomException.class);
     }
 
     @Test
@@ -106,25 +107,25 @@ class RoomTest {
     void restore_rejectsNullCode() {
         Set<RoomPlayer> players = Set.of(RoomPlayer.of(PlayerId.of("host-1"), "Alice", true, false));
         assertThatThrownBy(() -> Room.restore(null, GamePhase.LOBBY, players))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(InvalidRoomException.class);
     }
 
     @Test
     void restore_rejectsNullPhase() {
         Set<RoomPlayer> players = Set.of(RoomPlayer.of(PlayerId.of("host-1"), "Alice", true, false));
         assertThatThrownBy(() -> Room.restore(RoomCode.generate(), null, players))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(InvalidRoomException.class);
     }
 
     @Test
     void restore_rejectsEmptyPlayers() {
         assertThatThrownBy(() -> Room.restore(RoomCode.generate(), GamePhase.LOBBY, Set.of()))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(InvalidRoomException.class);
     }
 
     @Test
     void restore_rejectsNullPlayers() {
         assertThatThrownBy(() -> Room.restore(RoomCode.generate(), GamePhase.LOBBY, null))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(InvalidRoomException.class);
     }
 }

@@ -1,5 +1,6 @@
 package com.impostorgame.game.domain.model;
 
+import com.impostorgame.game.domain.exception.InvalidRoomPlayerException;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -21,13 +22,13 @@ class RoomPlayerTest {
     @Test
     void shouldRejectNullId() {
         assertThatThrownBy(() -> RoomPlayer.of(null, "Alice", false, false))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(InvalidRoomPlayerException.class);
     }
 
     @Test
     void shouldRejectBlankDisplayName() {
         assertThatThrownBy(() -> RoomPlayer.of(PlayerId.of("user-1"), "  ", false, false))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(InvalidRoomPlayerException.class);
     }
 
     @Test

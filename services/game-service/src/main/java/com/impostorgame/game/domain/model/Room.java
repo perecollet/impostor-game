@@ -1,5 +1,7 @@
 package com.impostorgame.game.domain.model;
 
+import com.impostorgame.game.domain.exception.InvalidRoomException;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -11,8 +13,8 @@ public class Room {
 
     private Room (RoomCode roomCode, RoomPlayer host) {
 
-        if (roomCode == null) throw new IllegalArgumentException("RoomCode must not be null");
-        if (host == null) throw new IllegalArgumentException("RoomPlayer must not be null");
+        if (roomCode == null) throw new InvalidRoomException("RoomCode must not be null");
+        if (host == null) throw new InvalidRoomException("RoomPlayer must not be null");
 
         this.roomCode = roomCode;
         this.gamePhase = GamePhase.LOBBY;
@@ -21,9 +23,9 @@ public class Room {
     }
 
     private Room(RoomCode roomCode, GamePhase gamePhase, Set<RoomPlayer> roomPlayers){
-        if (roomCode == null) throw new IllegalArgumentException("RoomCode must not be null");
-        if (gamePhase == null) throw new IllegalArgumentException("GamePhase must not be null");
-        if (roomPlayers == null || roomPlayers.isEmpty()) throw new IllegalArgumentException("roomPlayers must not be null or empty");
+        if (roomCode == null) throw new InvalidRoomException("RoomCode must not be null");
+        if (gamePhase == null) throw new InvalidRoomException("GamePhase must not be null");
+        if (roomPlayers == null || roomPlayers.isEmpty()) throw new InvalidRoomException("roomPlayers must not be null or empty");
 
         this.roomCode = roomCode;
         this.gamePhase = gamePhase;
@@ -47,12 +49,12 @@ public class Room {
     }
 
     public void join(RoomPlayer roomPlayer) {
-        if (roomPlayer == null) throw new IllegalArgumentException("RoomPlayer must not be null");
+        if (roomPlayer == null) throw new InvalidRoomException("RoomPlayer must not be null");
         this.roomPlayers.add(roomPlayer);
     }
 
     public void leave(PlayerId id) {
-        if (id == null) throw new IllegalArgumentException("Id must not be null");
+        if (id == null) throw new InvalidRoomException("Id must not be null");
         this.roomPlayers.removeIf(p -> p.id().equals(id));
     }
 

@@ -1,5 +1,6 @@
 package com.impostorgame.game.domain.model;
 
+import com.impostorgame.game.domain.exception.InvalidPlayerIdException;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -18,13 +19,13 @@ class PlayerIdTest {
     @Test
     void shouldRejectNullValue() {
         assertThatThrownBy(() -> PlayerId.of(null))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(InvalidPlayerIdException.class);
     }
 
     @Test
     void shouldRejectBlankValue() {
         assertThatThrownBy(() -> PlayerId.of("   "))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(InvalidPlayerIdException.class);
     }
 
     @Test

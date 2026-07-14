@@ -1,5 +1,7 @@
 package com.impostorgame.game.domain.model;
 
+import com.impostorgame.game.domain.exception.InvalidRoomCodeException;
+
 import java.security.SecureRandom;
 import java.util.regex.Pattern;
 
@@ -12,15 +14,15 @@ public record RoomCode(String value) {
 
     public RoomCode {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("Room code value cannot be blank");
+            throw new InvalidRoomCodeException("Room code value cannot be blank");
         }
 
         if (value.length() != LENGTH) {
-            throw new IllegalArgumentException("Room code must be exactly 6 characters");
+            throw new InvalidRoomCodeException("Room code must be exactly 6 characters");
         }
 
         if (!PATTERN.matcher(value).matches()) {
-            throw new IllegalArgumentException("Room code must be 6 characters and not contain invalid characters");
+            throw new InvalidRoomCodeException("Room code must be 6 characters and not contain invalid characters");
         }
     }
 

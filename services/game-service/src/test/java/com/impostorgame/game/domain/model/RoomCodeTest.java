@@ -1,5 +1,6 @@
 package com.impostorgame.game.domain.model;
 
+import com.impostorgame.game.domain.exception.InvalidRoomCodeException;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -26,29 +27,29 @@ public class RoomCodeTest {
     @Test
     void constructor_shouldThrowWhenContainsInvalidCharacters() {
         assertThatThrownBy(() -> new RoomCode("ABC1EF"))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(InvalidRoomCodeException.class);
         assertThatThrownBy(() -> new RoomCode("abcdef"))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(InvalidRoomCodeException.class);
         assertThatThrownBy(() -> new RoomCode("ABC!EF"))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(InvalidRoomCodeException.class);
     }
 
     @Test
     void constructor_shouldThrowWhenBlank() {
         assertThatThrownBy(() -> new RoomCode(""))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(InvalidRoomCodeException.class);
     }
 
     @Test
     void constructor_shouldThrowWhenNotSixCharacters() {
         assertThatThrownBy(() -> new RoomCode("AB"))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(InvalidRoomCodeException.class);
     }
 
     @Test
     void constructor_shouldThrowWhenNull() {
         assertThatThrownBy(() -> new RoomCode(null))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(InvalidRoomCodeException.class);
     }
 
     @Test
