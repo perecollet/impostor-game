@@ -4,7 +4,6 @@ import com.impostorgame.auth.domain.model.Role;
 import com.impostorgame.auth.domain.port.out.JwtPort;
 import com.impostorgame.auth.infrastructure.config.JwtProperties;
 import io.jsonwebtoken.Jwts;
-import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -21,20 +20,14 @@ import java.util.UUID;
 public class JwtAdapter implements JwtPort {
 
     private final JwtProperties jwtProperties;
-    private PrivateKey privateKey;
+    private final PrivateKey privateKey;
 
     public JwtAdapter(JwtProperties jwtProperties) {
         this.jwtProperties = jwtProperties;
-    }
 
-    @PostConstruct
-    private void loadPrivateKey() {
         try {
             byte[] pem = jwtProperties.privateKeyLocation().getInputStream().readAllBytes();
-            String content = new String(pem, StandardCharsets.UTF_8)
-                    .replace("-----BEGIN PRIVATE KEY-----", "")
-                    .replace("-----END PRIVATE KEY-----", "")
-                    .replaceAll("\\s", "");
+            String content = extractKeyContent(pem);
             byte[] decoded = Base64.getDecoder().decode(content);
             this.privateKey = KeyFactory.getInstance("RSA")
                     .generatePrivate(new PKCS8EncodedKeySpec(decoded));
@@ -58,5 +51,12 @@ public class JwtAdapter implements JwtPort {
                 .expiration(Date.from(now.plus(expiration)))
                 .signWith(privateKey, Jwts.SIG.RS256)
                 .compact();
+    }
+
+    private String extractKeyContent(byte[] pem) {
+        return new String(pem, StandardCharsets.UTF_8)
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replaceAll("\\s", "");
     }
 }
