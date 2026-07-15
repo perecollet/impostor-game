@@ -1,187 +1,171 @@
 # Impostor Game
 
-Juego multijugador de deducción social por palabras. Todos los jugadores reciben una
-palabra secreta; un jugador (el impostor) recibe una palabra parecida pero distinta.
-Se discute y se vota para descubrir al impostor. No hace falta registrarse: juegan
-invitados y usuarios registrados.
+A multiplayer social-deduction word game built as a **microservices learning project**.
 
-> Este proyecto es, sobre todo, una **plataforma de aprendizaje** de arquitectura de
-> microservicios: hexagonal (Ports & Adapters), DDD, TDD, mensajería asíncrona con
-> Kafka, autenticación JWT distribuida (RS256 + JWKS) y CI/CD.
+Every player receives a secret word — except one, the **impostor**, who gets a similar but
+different word. Players discuss, then vote to unmask the impostor. No registration required:
+both guests and registered users can play.
+
+> This repository is primarily a hands-on study of microservices architecture: hexagonal
+> (Ports & Adapters) design, DDD, TDD, async messaging with Kafka, distributed authentication
+> with JWT (RS256 + JWKS), and CI/CD with GitHub Actions.
 
 ---
 
-## Stack
+## Tech stack
 
-| Área | Tecnología |
+| Area | Choice |
 |---|---|
-| Lenguaje / Framework | Java 25 · Spring Boot 4.0.7 |
+| Language | Java 25 |
+| Framework | Spring Boot 4.0.x |
 | Build | Maven monorepo (parent pom) |
-| Spring Cloud | 2025.1.2 |
-| Discovery | Eureka |
-| Sync / Async | REST (OpenFeign) · Apache Kafka |
-| Datos | PostgreSQL (una por servicio) · Redis · Flyway |
-| Auth | JWT RS256 + JWKS |
-| Tiempo real | WebSocket STOMP |
-| Testing | JUnit 5 · Mockito · Testcontainers · AssertJ |
+| Service discovery | Eureka |
+| Config server | Spring Cloud Config *(Slice 5)* |
+| Sync communication | REST via OpenFeign |
+| Async communication | Apache Kafka |
+| Cache / ephemeral state | Redis |
+| Database | PostgreSQL (one per service) |
+| Migrations | Flyway |
+| Real-time | WebSocket (STOMP) |
+| Testing | JUnit 5, Mockito, Testcontainers |
 | CI/CD | GitHub Actions |
-| Despliegue | Homelab vía Docker Compose |
+| Observability | Micrometer + Zipkin, Prometheus + Grafana *(Slice 5)* |
 
 ---
 
-## Arquitectura
+## Architecture
 
-Todos los servicios de negocio siguen **arquitectura hexagonal + DDD**:
+Each business service follows **Hexagonal Architecture + DDD**, with a strict dependency rule:
 
 ```
-domain/          ← Java puro, sin dependencias de framework
-  model/         ← agregados, entidades, value objects
-  event/         ← eventos de dominio
-  exception/     ← excepciones de dominio
-  port/
-    in/          ← casos de uso (driving ports)
-    out/         ← repositorios y servicios externos (driven ports)
-
-application/     ← implementa port/in, orquesta el dominio
-  service/       ← una clase por caso de uso
-
-infrastructure/  ← todo el código Spring/JPA/Kafka/Redis
-  adapter/
-    in/web/          ← controllers REST
-    out/persistence/ ← store primario (JPA o Redis cuando es fuente de verdad)
-    out/messaging/   ← productores/consumidores Kafka
-    out/cache/       ← Redis solo como caché derivada
-  config/            ← beans de Spring
+domain  ←  application  ←  infrastructure
 ```
 
-**Regla de dependencias:** `domain ← application ← infrastructure`. Nunca al revés.
-`domain/` tiene cero imports de Spring/JPA/Kafka y cero Lombok.
+The `domain` layer is pure Java — zero Spring, JPA, or Kafka imports — and never depends on the
+layers around it.
+
+```
+{service}/src/main/java/com/impostorgame/{service}/
+├── domain/            pure Java: aggregates, value objects, domain events, ports (in/out)
+├── application/       use-case implementations orchestrating the domain
+└── infrastructure/    Spring/JPA/Kafka/Redis: web adapters, persistence, messaging, config
+```
+
+For architectural conventions, hard rules, and the reasoning behind each decision, see
+[`CLAUDE.md`](./CLAUDE.md) — the source of truth for this project.
 
 ---
 
-## Servicios
+## Services
 
-| Servicio | Slice | Puerto | Estado |
+| Service | Slice | Port | Role |
 |---|---|---|---|
-| discovery-server | 1 | 8761 | ✅ |
-| auth-service | 1 | 8081 | ✅ funcional |
-| game-service | 1+3 | 8082 | 🚧 en curso |
-| word-service | 2 | 8083 | ⏳ |
-| voting-service | 3 | 8084 | ⏳ |
-| player-service | 3 | 8085 | ⏳ |
-| notification-service | 4 | 8086 | ⏳ |
-| api-gateway | 5 | 8080 | ⏳ |
-| config-server | 5 | 8888 | ⏳ |
-
-Módulos activos en el parent pom: `discovery-server`, `auth-service`, `game-service`.
+| discovery-server | 1 | 8761 | Eureka registry (infrastructure only) |
+| auth-service | 1 | 8081 | Issues JWTs, holds the RSA private key |
+| game-service | 1 & 3 | 8082 | Rooms, players, game state machine |
+| word-service | 2 | 8083 | Word assignment (incl. impostor word) |
+| voting-service | 3 | 8084 | Vote tally |
+| player-service | 3 | 8085 | Player stats / leaderboard |
+| notification-service | 4 | 8086 | Translates domain events into client messages |
+| api-gateway | 5 | 8080 | Single entry point (infrastructure only) |
+| config-server | 5 | 8888 | Centralized config (infrastructure only) |
 
 ---
 
-## Invitado vs registrado
+## Authentication
 
-| | Invitado | Registrado |
+Authentication uses **JWT signed with RS256** and validated via **JWKS**:
+
+- `auth-service` is the *only* service holding the RSA private key. It signs tokens.
+- Every other service is an **OAuth2 resource server**: it validates tokens by fetching the
+  public key from `auth-service`'s JWKS endpoint (`/.well-known/jwks.json`, `kid: auth-key-1`).
+- RS256 (over HMAC) confines token-forging capability to `auth-service` alone.
+
+### Guest vs registered players
+
+| | Guest | Registered |
 |---|---|---|
-| Rol JWT | `GUEST` | `USER` |
-| Expiración | 4h, sin refresh | 24h + refresh token |
-| Persistido | Nunca | Sí |
-| Jugar | ✅ | ✅ |
-| Stats / ranking | ❌ | ✅ |
-| Reconectar | ❌ | ✅ |
+| JWT role | `GUEST` | `USER` |
+| Token expiry | 4h, no refresh | 24h + refresh token |
+| Persisted in DB | Never | Yes |
+| Play a game | ✅ | ✅ |
+| Stats / leaderboard | ❌ | ✅ |
+| Reconnect | ❌ | ✅ |
 
 ---
 
-## Entrega iterativa — 5 slices
+## Game flow
 
-| Slice | Terminado cuando |
-|---|---|
-| 1 — "Existe una sala" | El jugador obtiene token, crea/entra a una sala y aparece en Eureka |
-| 2 — "Palabras asignadas" | El host inicia la partida y un jugador recibe la palabra de impostor |
-| 3 — "Ronda jugable" | Lobby → palabras → discusión → votación → resultados |
-| 4 — "Se siente como juego" | Actualizaciones live por WebSocket, sin polling |
-| 5 — "Listo para producción" | Gateway, config server, CI/CD, tracing |
+A round moves through a manual finite-state machine (lives in `game-service`):
 
-**Slice 1 en curso.** `auth-service` completo; `game-service` con dominio y aplicación
-listos, persistencia Redis lista, `RoomController` en progreso.
-
----
-
-## Puesta en marcha
-
-Requisitos: Java 25, Maven 3.9+, Docker + Docker Compose.
-
-### 1. Secretos
-
-Crea un `.env` en la raíz (nunca se commitea) con las credenciales de BD y las claves.
-La keypair RSA de `auth-service` (PKCS#8) está gitignoreada.
-
-### 2. Infraestructura (Postgres, Redis, Kafka)
-
-```bash
-docker compose up -d
+```
+LOBBY → WORD_ASSIGNMENT → DISCUSSION → VOTING → RESULTS → LOBBY
 ```
 
-### 3. Levantar un servicio en local
+Services never call the state machine directly. They publish Kafka events and `game-service`
+reacts — each service publishing only events about what it owns.
+
+---
+
+## Getting started
+
+### Prerequisites
+
+- JDK 25 (managed with `jenv` recommended)
+- Maven 3.9.x
+- Docker Desktop (for Postgres, Redis, Kafka via Docker Compose)
+
+### Configuration
+
+Secrets live in a git-ignored `.env` file at the repo root (never committed). Profiles:
+
+| Profile | Purpose |
+|---|---|
+| `local` | Local dev — `localhost` URLs |
+| `docker` | Homelab / Docker — service-name URLs |
+
+### Run a service locally
+
+Load the env file first, then activate the profile:
 
 ```bash
-set -a; source .env; set +a
+set -a; source ../../.env; set +a
 mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
-En Docker/homelab: `SPRING_PROFILES_ACTIVE=docker`.
+Start `discovery-server` first, then the individual services.
 
-### Perfiles
+### Run in Docker
 
-| Fichero | Propósito | Commiteado |
+```bash
+SPRING_PROFILES_ACTIVE=docker docker compose up
+```
+
+---
+
+## Delivery roadmap
+
+The project is delivered in five vertical slices, each shippable end-to-end.
+
+| Slice | Goal | Status |
 |---|---|---|
-| `application.yml` | Config común no sensible | ✅ |
-| `application-local.yml` | URLs de dev local | ✅ |
-| `application-docker.yml` | URLs de Docker/homelab | ✅ |
-| `.env` | Secretos y contraseñas | ❌ |
+| 1 — A room exists | Get a token, create/join a room, appear in Eureka | ✅ Done |
+| 2 — Words assigned | Host starts game, words dealt, one player gets impostor word | 🔨 In progress |
+| 3 — Full round playable | Lobby → words → discussion → voting → results | ⏳ |
+| 4 — Feels like a game | Live WebSocket updates, no polling | ⏳ |
+| 5 — Production ready | Gateway, config server, CI/CD, tracing | ⏳ |
 
 ---
 
 ## Testing
 
-```bash
-mvn test                      # todos
-mvn test -Dgroups=unit        # solo unitarios
-mvn test -Dgroups=integration # solo integración (Testcontainers)
-```
-
-- **Unit:** `@ExtendWith(MockitoExtension.class)`, sin contexto Spring, `@Tag("unit")`.
-- **Integration:** `@SpringBootTest` + Testcontainers, `@Tag("integration")`.
-- Layout de tests espeja la estructura de paquetes; AssertJ para asserts.
-- TDD a partir de `word-service`.
+- **Unit tests** — no Spring context, `@Tag("unit")`, Mockito.
+- **Integration tests** — `@SpringBootTest` + Testcontainers, `@Tag("integration")`.
+- Tests mirror the production package structure.
+- TDD from `word-service` onwards.
 
 ---
 
-## Reglas duras
-
-- Ningún servicio accede a la BD de otro.
-- Sin lógica de negocio compartida en el monorepo (solo versiones en el pom raíz).
-- `domain/` sin imports de Spring/JPA/Kafka y sin Lombok.
-- Los controllers llaman a `port/in`, nunca a los application services directamente.
-- Las entidades de dominio no se devuelven desde controllers: siempre a DTO.
-- `PlayerContext` se duplica por servicio, nunca se extrae a un módulo compartido.
-- La máquina de estados solo se invoca dentro de `game-service`.
-- Los invitados nunca se persisten.
-- Los consumidores Kafka deben ser idempotentes.
-- Clases inyectables: constructor explícito, `private final`, sin `@RequiredArgsConstructor`.
-  Lombok solo `@Getter`/`@Builder` en DTOs y entidades Redis.
-
----
-
-## Estructura del monorepo
-
-```
-impostor-game/
-├── pom.xml                  ← parent pom
-├── docker-compose.yml
-├── docker/init-dbs.sql
-├── CLAUDE.md                ← fuente de verdad
-├── infrastructure/
-│   └── discovery-server/
-└── services/
-    ├── auth-service/
-    └── game-service/
-```
+## License
+ 
+MIT — see [`LICENSE`](./LICENSE).
