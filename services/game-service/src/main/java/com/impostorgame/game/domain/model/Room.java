@@ -51,6 +51,7 @@ public class Room {
 
     public void join(RoomPlayer roomPlayer) {
         if (roomPlayer == null) throw new InvalidRoomException("RoomPlayer must not be null");
+        if (gamePhase != GamePhase.LOBBY) throw new InvalidRoomException("Unable to join room in this phase");
         this.roomPlayers.put(roomPlayer.id(), roomPlayer);
     }
 

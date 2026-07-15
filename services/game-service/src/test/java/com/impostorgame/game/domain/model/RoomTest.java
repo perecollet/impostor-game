@@ -144,4 +144,23 @@ class RoomTest {
         assertThatThrownBy(() -> Room.restore(RoomCode.generate(), GamePhase.LOBBY, null))
                 .isInstanceOf(InvalidRoomException.class);
     }
+
+    @Test
+    void join_rejectsWhenPhaseIsNotLobby() {
+        RoomPlayer alice = RoomPlayer.of(PlayerId.of("host-1"), "Alice", true, false);
+        Map<PlayerId, RoomPlayer> players = Map.of(alice.id(), alice);
+        Room room = Room.restore(RoomCode.generate(), GamePhase.DISCUSSION, players);
+        RoomPlayer latecomer = guest("p2", "Bob");
+
+        assertThatThrownBy(() -> room.join(latecomer))
+                .isInstanceOf(InvalidRoomException.class);
+    }
+
+    @Test
+    void join_rejectsNullPlayer() {
+        Room room = Room.create(RoomCode.generate(), host());
+
+        assertThatThrownBy(() -> room.join(null))
+                .isInstanceOf(InvalidRoomException.class);
+    }
 }
