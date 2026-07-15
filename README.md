@@ -167,5 +167,5 @@ The project is delivered in five vertical slices, each shippable end-to-end.
 ---
 
 ## License
-
-*(add a license before making the repository public)*
+ 
+MIT — see [`LICENSE`](./LICENSE).
