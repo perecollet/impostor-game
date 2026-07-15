@@ -11,8 +11,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RoomPlayerTest {
 
     @Test
-    void shouldCreateRoomPlayer() {
-        RoomPlayer player = RoomPlayer.of(PlayerId.of("user-1"), "Alice", true, false);
+    void restore_buildsRoomPlayerWithGivenState() {
+        RoomPlayer player = RoomPlayer.restore(PlayerId.of("user-1"), "Alice", true, false);
+
         assertThat(player.id()).isEqualTo(PlayerId.of("user-1"));
         assertThat(player.displayName()).isEqualTo("Alice");
         assertThat(player.isHost()).isTrue();
@@ -20,14 +21,32 @@ class RoomPlayerTest {
     }
 
     @Test
-    void shouldRejectNullId() {
-        assertThatThrownBy(() -> RoomPlayer.of(null, "Alice", false, false))
+    void restore_rejectsNullId() {
+        assertThatThrownBy(() -> RoomPlayer.restore(null, "Alice", false, false))
                 .isInstanceOf(InvalidRoomPlayerException.class);
     }
 
     @Test
-    void shouldRejectBlankDisplayName() {
-        assertThatThrownBy(() -> RoomPlayer.of(PlayerId.of("user-1"), "  ", false, false))
+    void restore_rejectsBlankDisplayName() {
+        assertThatThrownBy(() -> RoomPlayer.restore(PlayerId.of("user-1"), "  ", false, false))
                 .isInstanceOf(InvalidRoomPlayerException.class);
+    }
+
+    @Test
+    void host_marksPlayerAsHost() {
+        RoomPlayer player = RoomPlayer.host(new RegisteredPlayer("user-1", "Alice"));
+
+        assertThat(player.id()).isEqualTo(PlayerId.of("user-1"));
+        assertThat(player.displayName()).isEqualTo("Alice");
+        assertThat(player.isHost()).isTrue();
+        assertThat(player.isGuest()).isFalse();
+    }
+
+    @Test
+    void host_marksGuestPlayerAsGuest() {
+        RoomPlayer player = RoomPlayer.host(new GuestPlayer("guest-1", "Anon"));
+
+        assertThat(player.isHost()).isTrue();
+        assertThat(player.isGuest()).isTrue();
     }
 }

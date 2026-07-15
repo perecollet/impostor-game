@@ -11,17 +11,17 @@ public class Room {
     private GamePhase gamePhase;
     private final Map<PlayerId, RoomPlayer> roomPlayers;
 
-    private Room (RoomCode roomCode, RoomPlayer host) {
-
+    private Room(RoomCode roomCode, PlayerContext host) {
         if (roomCode == null) throw new InvalidRoomException("RoomCode must not be null");
-        if (host == null) throw new InvalidRoomException("RoomPlayer must not be null");
+        if (host == null) throw new InvalidRoomException("PlayerContext must not be null");
 
         this.roomCode = roomCode;
         this.gamePhase = GamePhase.LOBBY;
         this.roomPlayers = new HashMap<>();
-        RoomPlayer hostPlayer = RoomPlayer.of(host.id(), host.displayName(), true, host.isGuest());
+        RoomPlayer hostPlayer = RoomPlayer.host(host);   // ← una sola construcción, isHost=true garantizado
         roomPlayers.put(hostPlayer.id(), hostPlayer);
     }
+
 
     private Room(RoomCode roomCode, GamePhase gamePhase, Map<PlayerId, RoomPlayer> roomPlayers){
         if (roomCode == null) throw new InvalidRoomException("RoomCode must not be null");
@@ -33,7 +33,7 @@ public class Room {
         this.roomPlayers = new HashMap<>(roomPlayers);
     }
 
-    public static Room create(RoomCode roomCode, RoomPlayer host) {
+    public static Room create(RoomCode roomCode, PlayerContext host) {
         return new Room(roomCode, host);
     }
 

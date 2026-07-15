@@ -1,6 +1,8 @@
 package com.impostorgame.game.application.service;
 
 import com.impostorgame.game.domain.exception.RoomCodeGenerationException;
+import com.impostorgame.game.domain.model.GuestPlayer;
+import com.impostorgame.game.domain.model.RegisteredPlayer;
 import com.impostorgame.game.domain.model.Room;
 import com.impostorgame.game.domain.model.RoomCode;
 import com.impostorgame.game.domain.port.in.CreateRoomUseCase.CreateRoomCommand;
@@ -39,7 +41,7 @@ class CreateRoomServiceTest {
         when(roomRepository.saveIfAbsent(any(Room.class))).thenAnswer(inv -> Optional.of(inv.getArgument(0)));
 
         RoomResponse response = createRoomService.createRoom(
-                new CreateRoomCommand("user-1", "Alice", false));
+                new CreateRoomCommand(new RegisteredPlayer("user-1", "Alice")));
 
         assertThat(response.roomCode()).isEqualTo("ABCDEF");
         assertThat(response.phase()).isEqualTo("LOBBY");
@@ -52,12 +54,13 @@ class CreateRoomServiceTest {
         when(roomRepository.saveIfAbsent(any(Room.class))).thenAnswer(inv -> Optional.of(inv.getArgument(0)));
 
         RoomResponse response = createRoomService.createRoom(
-                new CreateRoomCommand("user-1", "Alice", false));
+                new CreateRoomCommand(new RegisteredPlayer("user-1", "Alice")));
 
         PlayerResponse creator = response.players().get(0);
         assertThat(creator.isHost()).isTrue();
         assertThat(creator.id()).isEqualTo("user-1");
         assertThat(creator.displayName()).isEqualTo("Alice");
+        assertThat(creator.isGuest()).isFalse();
     }
 
     @Test
@@ -66,7 +69,7 @@ class CreateRoomServiceTest {
         when(roomRepository.saveIfAbsent(any(Room.class))).thenAnswer(inv -> Optional.of(inv.getArgument(0)));
 
         RoomResponse response = createRoomService.createRoom(
-                new CreateRoomCommand("guest-1", "RandomName", true));
+                new CreateRoomCommand(new GuestPlayer("guest-1", "RandomName")));
 
         assertThat(response.players().get(0).isGuest()).isTrue();
     }
@@ -81,7 +84,7 @@ class CreateRoomServiceTest {
                 .thenAnswer(inv -> Optional.of(inv.getArgument(0)));
 
         RoomResponse response = createRoomService.createRoom(
-                new CreateRoomCommand("user-1", "Alice", false));
+                new CreateRoomCommand(new RegisteredPlayer("user-1", "Alice")));
 
         assertThat(response.roomCode()).isEqualTo("BBBBBB");
         verify(roomCodeGenerator, times(2)).generate();
@@ -92,7 +95,7 @@ class CreateRoomServiceTest {
     void createRoom_throwsRoomCodeGenerationException_whenRetriesExhausted() {
         when(roomCodeGenerator.generate()).thenReturn(new RoomCode("AAAAAA"));
         when(roomRepository.saveIfAbsent(any(Room.class))).thenReturn(Optional.empty());
-        CreateRoomCommand command = new CreateRoomCommand("user-1", "Alice", false);
+        CreateRoomCommand command = new CreateRoomCommand(new RegisteredPlayer("user-1", "Alice"));
 
         assertThatThrownBy(() -> createRoomService.createRoom(command))
                 .isInstanceOf(RoomCodeGenerationException.class);
@@ -105,7 +108,7 @@ class CreateRoomServiceTest {
         when(roomCodeGenerator.generate()).thenReturn(new RoomCode("ABCDEF"));
         when(roomRepository.saveIfAbsent(any(Room.class))).thenAnswer(inv -> Optional.of(inv.getArgument(0)));
 
-        createRoomService.createRoom(new CreateRoomCommand("user-1", "Alice", false));
+        createRoomService.createRoom(new CreateRoomCommand(new RegisteredPlayer("user-1", "Alice")));
 
         verify(roomRepository).saveIfAbsent(any(Room.class));
     }

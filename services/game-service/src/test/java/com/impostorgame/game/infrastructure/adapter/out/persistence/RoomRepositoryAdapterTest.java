@@ -1,6 +1,7 @@
 package com.impostorgame.game.infrastructure.adapter.out.persistence;
 
 import com.impostorgame.game.domain.model.PlayerId;
+import com.impostorgame.game.domain.model.RegisteredPlayer;
 import com.impostorgame.game.domain.model.Room;
 import com.impostorgame.game.domain.model.RoomCode;
 import com.impostorgame.game.domain.model.RoomPlayer;
@@ -40,21 +41,19 @@ class RoomRepositoryAdapterTest {
 
     @Test
     void saveIfAbsent_persistsRoomAndCanBeRetrievedFromRedis() {
-        RoomPlayer host = RoomPlayer.of(PlayerId.of("host-1"), "Alice", false, false);
-        Room room = Room.create(RoomCode.generate(), host);
+        Room room = Room.create(RoomCode.generate(), new RegisteredPlayer("host-1", "Alice"));
 
         Optional<Room> saved = roomRepository.saveIfAbsent(room);
 
         assertThat(saved).isPresent();
         assertThat(saved.get().code()).isEqualTo(room.code());
-        assertThat(saved.get().players()).containsKey(host.id());
-        assertThat(saved.get().players().get(host.id()).displayName()).isEqualTo("Alice");
+        assertThat(saved.get().players()).containsKey(PlayerId.of("host-1"));
+        assertThat(saved.get().players().get(PlayerId.of("host-1")).displayName()).isEqualTo("Alice");
     }
 
     @Test
     void saveIfAbsent_setsExpirationOnTheRedisKey() {
-        RoomPlayer host = RoomPlayer.of(PlayerId.of("host-2"), "Bob", false, false);
-        Room room = Room.create(RoomCode.generate(), host);
+        Room room = Room.create(RoomCode.generate(), new RegisteredPlayer("host-2", "Bob"));
 
         roomRepository.saveIfAbsent(room);
 

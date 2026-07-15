@@ -19,7 +19,11 @@ public class RoomPlayer {
         this.isGuest = isGuest;
     }
 
-    public static RoomPlayer of(PlayerId id, String displayName, boolean isHost, boolean isGuest) {
+    public static RoomPlayer host(PlayerContext player) {
+        return new RoomPlayer(PlayerId.of(player.id()), player.displayName(), true, player.isGuest());
+    }
+
+    public static RoomPlayer restore(PlayerId id, String displayName, boolean isHost, boolean isGuest) {
         return new RoomPlayer(id, displayName, isHost, isGuest);
     }
 

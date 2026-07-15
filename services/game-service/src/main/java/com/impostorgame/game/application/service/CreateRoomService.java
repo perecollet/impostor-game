@@ -1,9 +1,7 @@
 package com.impostorgame.game.application.service;
 
 import com.impostorgame.game.domain.exception.RoomCodeGenerationException;
-import com.impostorgame.game.domain.model.PlayerId;
 import com.impostorgame.game.domain.model.Room;
-import com.impostorgame.game.domain.model.RoomPlayer;
 import com.impostorgame.game.domain.port.in.CreateRoomUseCase;
 import com.impostorgame.game.domain.port.in.PlayerResponse;
 import com.impostorgame.game.domain.port.in.RoomResponse;
@@ -28,10 +26,8 @@ public class CreateRoomService implements CreateRoomUseCase {
     }
 
     public RoomResponse createRoom(CreateRoomCommand command) {
-        RoomPlayer host = RoomPlayer.of(PlayerId.of(command.playerId()), command.displayName(), false, command.isGuest());
-
         for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-            Room room = Room.create(roomCodeGenerator.generate(), host);
+            Room room = Room.create(roomCodeGenerator.generate(), command.player());
             Optional<Room> saved = roomRepository.saveIfAbsent(room);
             if (saved.isPresent()) {
                 return toResponse(saved.get());

@@ -54,7 +54,7 @@ public class RoomRepositoryAdapter implements RoomRepository {
     private Room toDomain(RoomRedisEntity entity) {
         RoomCode code = RoomCode.of(entity.getCode());
         Map<PlayerId, RoomPlayer> players = entity.getPlayers().values().stream()
-                .map(p -> RoomPlayer.of(PlayerId.of(p.getId()), p.getDisplayName(), p.isHost(), p.isGuest()))
+                .map(p -> RoomPlayer.restore(PlayerId.of(p.getId()), p.getDisplayName(), p.isHost(), p.isGuest()))
                 .collect(Collectors.toMap(RoomPlayer::id, Function.identity()));
         return Room.restore(code, GamePhase.valueOf(entity.getPhase()), players);
     }

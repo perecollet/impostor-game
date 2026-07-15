@@ -1,5 +1,8 @@
 package com.impostorgame.game.infrastructure.adapter.in.web;
 
+import com.impostorgame.game.domain.model.GuestPlayer;
+import com.impostorgame.game.domain.model.PlayerContext;
+import com.impostorgame.game.domain.model.RegisteredPlayer;
 import com.impostorgame.game.domain.model.Role;
 import com.impostorgame.game.domain.port.in.CreateRoomUseCase;
 import com.impostorgame.game.domain.port.in.RoomResponse;
@@ -36,8 +39,12 @@ public class RoomController {
     private CreateRoomUseCase.CreateRoomCommand toCommand (Jwt jwt){
         String playerId = jwt.getSubject();
         String displayName = jwt.getClaimAsString("displayName");
-        boolean isGuest = Role.GUEST.name().equals(jwt.getClaimAsString("role"));
+        String role = jwt.getClaimAsString("role");
 
-        return new CreateRoomUseCase.CreateRoomCommand(playerId, displayName, isGuest);
+        PlayerContext player = Role.GUEST.name().equals(role)
+                ? new GuestPlayer(playerId, displayName)
+                : new RegisteredPlayer(playerId, displayName);
+
+        return new CreateRoomUseCase.CreateRoomCommand(player);
     }
 }
