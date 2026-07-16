@@ -124,4 +124,26 @@ class RefreshTokenServiceTest {
         verify(refreshTokenRepository).delete(expired);
         verify(refreshTokenIssuer, never()).issue(any());
     }
+
+    @Test
+    void refresh_throwsInvalidToken_whenUserNoLongerExists() {
+        UUID userId = UUID.randomUUID();
+        String plain = "valid-token";
+        Instant now = Instant.now();
+
+        RefreshToken existing = RefreshToken.restore(
+                UUID.randomUUID(), userId, TokenHasher.sha256(plain),
+                now.plusSeconds(3600), now);
+
+        when(refreshTokenRepository.findByTokenHash(TokenHasher.sha256(plain)))
+                .thenReturn(Optional.of(existing));
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+        RefreshTokenService target = service();
+        var request = new RefreshTokenRequest(plain);
+
+        assertThatThrownBy(() -> target.refresh(request))
+                .isInstanceOf(InvalidTokenException.class);
+
+        verify(refreshTokenIssuer, never()).issue(any());
+    }
 }
