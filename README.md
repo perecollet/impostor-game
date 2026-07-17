@@ -2,13 +2,14 @@
 
 A multiplayer social-deduction word game built as a **microservices learning project**.
 
-Every player receives a secret word — except one, the **impostor**, who gets a similar but
-different word. Players discuss, then vote to unmask the impostor. No registration required:
-both guests and registered users can play.
+Every player receives the same secret word — except one, the **impostor**, who instead gets a
+*hint*: something similar but not the same. The impostor must blend in without knowing the real
+word. Players discuss, then vote to unmask the impostor. No registration required: both guests
+and registered users can play.
 
 > This repository is primarily a hands-on study of microservices architecture: hexagonal
 > (Ports & Adapters) design, DDD, TDD, async messaging with Kafka, distributed authentication
-> with JWT (RS256 + JWKS), and CI/CD with GitHub Actions.
+> with JWT (RS256 + JWKS), LLM integration with Spring AI, and CI/CD with GitHub Actions.
 
 ---
 
@@ -27,6 +28,7 @@ both guests and registered users can play.
 | Database | PostgreSQL (one per service) |
 | Migrations | Flyway |
 | Real-time | WebSocket (STOMP) |
+| LLM integration | Spring AI (word/hint generation) |
 | Testing | JUnit 5, Mockito, Testcontainers |
 | CI/CD | GitHub Actions |
 | Observability | Micrometer + Zipkin, Prometheus + Grafana *(Slice 5)* |
@@ -41,14 +43,14 @@ Each business service follows **Hexagonal Architecture + DDD**, with a strict de
 domain  ←  application  ←  infrastructure
 ```
 
-The `domain` layer is pure Java — zero Spring, JPA, or Kafka imports — and never depends on the
-layers around it.
+The `domain` layer is pure Java — zero Spring, JPA, Kafka, or AI imports — and never depends on
+the layers around it.
 
 ```
 {service}/src/main/java/com/impostorgame/{service}/
 ├── domain/            pure Java: aggregates, value objects, domain events, ports (in/out)
 ├── application/       use-case implementations orchestrating the domain
-└── infrastructure/    Spring/JPA/Kafka/Redis: web adapters, persistence, messaging, config
+└── infrastructure/    Spring/JPA/Kafka/Redis/AI: web adapters, persistence, messaging, config
 ```
 
 For architectural conventions, hard rules, and the reasoning behind each decision, see
@@ -62,13 +64,16 @@ For architectural conventions, hard rules, and the reasoning behind each decisio
 |---|---|---|---|
 | discovery-server | 1 | 8761 | Eureka registry (infrastructure only) |
 | auth-service | 1 | 8081 | Issues JWTs, holds the RSA private key |
-| game-service | 1 & 3 | 8082 | Rooms, players, game state machine |
-| word-service | 2 | 8083 | Word assignment (incl. impostor word) |
+| game-service | 1, 2 & 3 | 8082 | Rooms, players, rounds, word dealing, game state machine |
 | voting-service | 3 | 8084 | Vote tally |
 | player-service | 3 | 8085 | Player stats / leaderboard |
 | notification-service | 4 | 8086 | Translates domain events into client messages |
 | api-gateway | 5 | 8080 | Single entry point (infrastructure only) |
 | config-server | 5 | 8888 | Centralized config (infrastructure only) |
+
+> Word/hint generation is **not** a separate service — it's an outbound port (`WordProvider`)
+> with a Spring AI adapter inside `game-service`. Dealing words and picking the impostor are
+> game rules, so they live in the game domain (`Round` aggregate).
 
 ---
 
@@ -96,14 +101,16 @@ Authentication uses **JWT signed with RS256** and validated via **JWKS**:
 
 ## Game flow
 
-A round moves through a manual finite-state machine (lives in `game-service`):
+A round moves through a manual finite-state machine, owned by the `Round` aggregate in
+`game-service`:
 
 ```
 LOBBY → WORD_ASSIGNMENT → DISCUSSION → VOTING → RESULTS → LOBBY
 ```
 
-Services never call the state machine directly. They publish Kafka events and `game-service`
-reacts — each service publishing only events about what it owns.
+The civilians share one word; the impostor gets a similar-but-different hint. Services never
+call the state machine directly. They publish Kafka events and `game-service` reacts — each
+service publishing only events about what it owns.
 
 ---
 
@@ -150,7 +157,7 @@ The project is delivered in five vertical slices, each shippable end-to-end.
 | Slice | Goal | Status |
 |---|---|---|
 | 1 — A room exists | Get a token, create/join a room, appear in Eureka | ✅ Done |
-| 2 — Words assigned | Host starts game, words dealt, one player gets impostor word | 🔨 In progress |
+| 2 — Words assigned | Host starts a round; game-service deals words (civilian = word, impostor = hint via LLM); one player is impostor | 🔨 In progress |
 | 3 — Full round playable | Lobby → words → discussion → voting → results | ⏳ |
 | 4 — Feels like a game | Live WebSocket updates, no polling | ⏳ |
 | 5 — Production ready | Gateway, config server, CI/CD, tracing | ⏳ |
@@ -159,13 +166,15 @@ The project is delivered in five vertical slices, each shippable end-to-end.
 
 ## Testing
 
-- **Unit tests** — no Spring context, `@Tag("unit")`, Mockito.
-- **Integration tests** — `@SpringBootTest` + Testcontainers, `@Tag("integration")`.
+- **Unit tests** — no Spring context, `@Tag("unit")`, Mockito. The LLM is never called; the
+  `WordProvider` port is mocked.
+- **Integration tests** — `@SpringBootTest` + Testcontainers, `@Tag("integration")`. Only these
+  hit the real model.
 - Tests mirror the production package structure.
-- TDD from `word-service` onwards.
+- TDD from word dealing onwards.
 
 ---
 
 ## License
- 
+
 MIT — see [`LICENSE`](./LICENSE).
