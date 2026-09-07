@@ -82,7 +82,7 @@ the name, not a boolean); `restore(...)` for rehydration.
 
 - Civilian receives a **word**; the impostor receives an **`impostorHint`** — similar but not
   identical. Exactly one impostor per round.
-- `WordPair` is a value object: `civilianWord` + `impostorHint`. Invariants: both non-blank
+- `WordPair` is a value object: `word` + `hint`. Invariants: both non-blank
   (`isBlank()`), trimmed on construction, and **distinct case-insensitively** (`Gato` vs `gato`
   is invalid). Original case is preserved; comparison ignores case. Throws
   `InvalidWordPairException`.
