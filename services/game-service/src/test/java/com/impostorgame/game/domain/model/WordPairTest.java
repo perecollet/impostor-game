@@ -6,54 +6,52 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.impostorgame.game.domain.exception.InvalidWordPairException;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 @Tag("unit")
 class WordPairTest {
 
     @Test
-    void createsPairPreservingOriginalCase() {
-        WordPair pair = new WordPair("Gato", "Felino");
+    void createsPairFromDistinctWords() {
+        Word word = new Word("Gato");
+        Word hint = new Word("Felino");
 
-        assertThat(pair.word()).isEqualTo("Gato");
-        assertThat(pair.hint()).isEqualTo("Felino");
+        WordPair pair = new WordPair(word, hint);
+
+        assertThat(pair.word()).isEqualTo(word);
+        assertThat(pair.hint()).isEqualTo(hint);
     }
 
-    @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = {" ", "   ", "\t"})
-    void rejectsBlankWord(String blank) {
-        assertThatThrownBy(() -> new WordPair(blank, "Felino"))
+    @Test
+    void rejectsNullWord() {
+        Word hint = new Word("Felino");
+
+        assertThatThrownBy(() -> new WordPair(null, hint))
                 .isInstanceOf(InvalidWordPairException.class);
     }
 
-    @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = {" ", "   ", "\t"})
-    void rejectsBlankHint(String blank) {
-        assertThatThrownBy(() -> new WordPair("Gato", blank))
+    @Test
+    void rejectsNullHint() {
+        Word word = new Word("Gato");
+
+        assertThatThrownBy(() -> new WordPair(word, null))
                 .isInstanceOf(InvalidWordPairException.class);
     }
 
     @Test
     void rejectsWordAndHintEqualIgnoringCase() {
-        assertThatThrownBy(() -> new WordPair("Gato", "gato"))
+        Word word = new Word("Gato");
+        Word hint = new Word("gato");
+
+        assertThatThrownBy(() -> new WordPair(word, hint))
                 .isInstanceOf(InvalidWordPairException.class);
     }
 
     @Test
     void rejectsWordAndHintEqualAfterTrim() {
-        assertThatThrownBy(() -> new WordPair("  Gato  ", "gato"))
+        Word word = new Word("  Gato  ");
+        Word hint = new Word("gato");
+
+        assertThatThrownBy(() -> new WordPair(word, hint))
                 .isInstanceOf(InvalidWordPairException.class);
-    }
-
-    @Test
-    void trimsSurroundingWhitespaceKeepingInnerText() {
-        WordPair pair = new WordPair("  Gato  ", "  Felino  ");
-
-        assertThat(pair.word()).isEqualTo("Gato");
-        assertThat(pair.hint()).isEqualTo("Felino");
     }
 }
