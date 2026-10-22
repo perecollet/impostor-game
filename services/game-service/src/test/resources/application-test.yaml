@@ -3,6 +3,9 @@ eureka:
     enabled: false
 
 spring:
+  ai:
+    model:
+      chat: none
   security:
     oauth2:
       resourceserver:
