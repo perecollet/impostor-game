@@ -6,6 +6,7 @@ import com.impostorgame.game.domain.model.Room;
 import com.impostorgame.game.domain.model.RoomCode;
 import com.impostorgame.game.domain.model.RoomPlayer;
 import com.impostorgame.game.domain.port.out.RoomRepository;
+import com.impostorgame.game.domain.port.out.WordProvider;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -38,6 +40,9 @@ class RoomRepositoryAdapterTest {
 
     @Autowired
     private RedisTemplate<String, RoomRedisEntity> redisTemplate;
+
+    @MockitoBean
+    private WordProvider wordProvider;
 
     @Test
     void saveIfAbsent_persistsRoomAndCanBeRetrievedFromRedis() {

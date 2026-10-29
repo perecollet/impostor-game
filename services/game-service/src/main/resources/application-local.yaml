@@ -2,6 +2,10 @@ auth-service:
   host: localhost:8081
 
 spring:
+  ai:
+    google:
+      genai:
+        api-key: ${GEMINI_API_KEY}
   data:
     redis:
       host: localhost

@@ -3,6 +3,7 @@ package com.impostorgame.game.infrastructure.adapter.in.web;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.impostorgame.game.domain.port.in.RoomResponse;
+import com.impostorgame.game.domain.port.out.WordProvider;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -23,6 +24,7 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.client.RestTestClient;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -64,6 +66,9 @@ class RoomControllerTest {
 
     private static KeyPair keyPair;
     private static HttpServer jwksServer;
+
+    @MockitoBean
+    private WordProvider wordProvider;
 
     @LocalServerPort
     private int port;

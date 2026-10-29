@@ -7,41 +7,43 @@ import com.impostorgame.game.domain.port.out.WordProvider;
 import com.impostorgame.game.infrastructure.config.LlmWordProviderProperties;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.converter.BeanOutputConverter;
+import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Component
 public class LlmWordProvider implements WordProvider {
 
     private static final String PROMPT_TEMPLATE = """
-        Estás generando palabras para un juego social de deducción llamado "Impostor".
-        Todos los jugadores reciben la misma palabra secreta, excepto el impostor, que recibe
-        una pista: una palabra relacionada pero distinta, para que pueda disimular sin conocer
-        la palabra real.
-
-        Genera un único par:
-        - "word": la palabra secreta.
-        - "hint": la pista para el impostor.
-
-        Reglas:
-        - Idioma de ambas palabras: %s.
-        - Cada una es un único sustantivo común, en singular y sin espacios.
-        - Vocabulario cotidiano, conocido por cualquier adulto. Ni nombres propios ni marcas.
-        - La pista pertenece al mismo ámbito que la palabra, pero no puede ser la misma palabra,
-          un sinónimo, un diminutivo ni una palabra derivada de ella.
-        - Ninguna de las dos puede ser una de estas palabras ya usadas: %s.
-
-        %s
-        """;
+            Estás generando palabras para un juego social de deducción llamado "Impostor".
+            Todos los jugadores reciben la misma palabra secreta, excepto el impostor, que recibe
+            una pista: una palabra relacionada pero distinta, para que pueda disimular sin conocer
+            la palabra real.
+            
+            Genera un único par:
+            - "word": la palabra secreta.
+            - "hint": la pista para el impostor.
+            
+            Reglas:
+            - Idioma de ambas palabras: %s.
+            - Cada una es un único sustantivo común, en singular y sin espacios.
+            - Vocabulario cotidiano, conocido por cualquier adulto. Ni nombres propios ni marcas.
+            - La pista pertenece al mismo ámbito que la palabra, pero no puede ser la misma palabra,
+              un sinónimo, un diminutivo ni una palabra derivada de ella.
+            - Ninguna de las dos puede ser una de estas palabras ya usadas: %s.
+            
+            %s
+            """;
 
     private final LlmWordProviderProperties properties;
     private final ChatClient chatClient;
-    private final BeanOutputConverter <LlmWordPairResponse> converter;
+    private final BeanOutputConverter<LlmWordPairResponse> converter;
     private final String format;
 
 
-    public LlmWordProvider(ChatClient.Builder chatClientBuilder,  LlmWordProviderProperties properties) {
+    public LlmWordProvider(ChatClient.Builder chatClientBuilder, LlmWordProviderProperties properties) {
         this.chatClient = chatClientBuilder.build();
         this.properties = properties;
         this.converter = new BeanOutputConverter<>(LlmWordPairResponse.class);
@@ -53,18 +55,20 @@ public class LlmWordProvider implements WordProvider {
         Set<Word> excludedWords = new HashSet<>(usedWords);
         RuntimeException lastCause = null;
 
-        for (int i = 0; i < properties.maxAttempts(); i++){
-            String prompt = PROMPT_TEMPLATE.formatted(properties.language(), toPromptList(excludedWords),format);
+        for (int i = 0; i < properties.maxAttempts(); i++) {
+            String prompt = PROMPT_TEMPLATE.formatted(properties.language(), toPromptList(excludedWords), format);
             String rawResponse = callModel(prompt);
             WordPair pair;
-            try{
+            try {
                 pair = interpret(rawResponse);
-            } catch (RuntimeException e){
+            } catch (RuntimeException e) {
                 lastCause = e;
                 continue;
             }
 
-            if (!usesExcludedWord(pair, excludedWords)) { return pair;}
+            if (!usesExcludedWord(pair, excludedWords)) {
+                return pair;
+            }
             excludedWords.add(pair.word());
             excludedWords.add(pair.hint());
         }
@@ -87,7 +91,7 @@ public class LlmWordProvider implements WordProvider {
 
     private WordPair interpret(String rawResponse) {
         LlmWordPairResponse response = converter.convert(rawResponse);
-        return new WordPair( new Word(response.word()),  new Word(response.hint()));
+        return new WordPair(new Word(response.word()), new Word(response.hint()));
     }
 
     private boolean usesExcludedWord(WordPair pair, Set<Word> excludedWords) {
@@ -95,7 +99,7 @@ public class LlmWordProvider implements WordProvider {
     }
 
     private static String toPromptList(Set<Word> usedWords) {
-        if  (usedWords.isEmpty()) {
+        if (usedWords.isEmpty()) {
             return "ninguna";
         }
 
